@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NetSpector - Generador y Editor de Informes de Seguridad</title>
+  <link rel="icon" type="image/png" href="Logo/4_icono_app_32x32_oscuro.png">
+  <link rel="apple-touch-icon" href="Logo/4_icono_app_32x32_oscuro.png">
+  <meta name="description" content="NetSpector - Suite de auditoría de seguridad técnica y generación de informes oficiales.">
+  <style>
+    :root {
+      --primary: #1b3a5f;
+      --primary-light: #2c5282;
+      --primary-hover: #152e4d;
+      --accent: #2563eb;
+      --bg-page: #f1f5f9;
+      --bg-card: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --border-table: #94a3b8;
+      --th-bg: #1b3a5f;
+      --th-text: #ffffff;
+      --td-key-bg: #f8fafc;
+      --ok: #15803d;
+      --ok-bg: #dcfce7;
+      --bad: #b91c1c;
+      --bad-bg: #fee2e2;
+      --warn: #b45309;
+      --warn-bg: #fef3c7;
+      --nd: #475569;
+      --nd-bg: #f1f5f9;
+      --radius: 8px;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+    }
+
+    [data-theme="dark"] {
+      --primary: #0f172a;
+      --primary-light: #1e293b;
+      --primary-hover: #020617;
+      --accent: #38bdf8;
+      --bg-page: #0b1120;
+      --bg-card: #1e293b;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --border-table: #475569;
+      --th-bg: #0f172a;
+      --th-text: #ffffff;
+      --td-key-bg: #141e33;
+      --ok: #4ade80;
+      --ok-bg: #064e3b;
+      --bad: #f87171;
+      --bad-bg: #7f1d1d;
+      --warn: #fbbf24;
+      --warn-bg: #78350f;
+      --nd: #94a3b8;
+      --nd-bg: #334155;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.5);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* TARJETA DE ENCUESTA */
+    .survey-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 26px;
+      margin: 30px auto 10px auto;
+      max-width: 900px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .survey-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: var(--text-main);
+    }
+    .survey-actions {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .btn-survey-yes {
+      background: var(--ok);
+      color: #fff;
+      padding: 9px 20px;
+      font-size: 14px;
+    }
+    .btn-survey-yes:hover {
+      background: #166534;
+      color: #fff;
+    }
+    .btn-survey-no {
+      background: var(--bg-page);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 9px 20px;
+      font-size: 14px;
+    }
+    .btn-survey-no:hover {
+      background: var(--bad-bg);
+      color: var(--bad);
+      border-color: var(--bad);
+    }
+
+    /* BARRA SUPERIOR DE HERRAMIENTAS (No imprimible) */
+    .app-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: var(--primary);
+      color: #fff;
+      padding: 10px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.3px;
+    }
+    .toolbar-brand-icon {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      border-radius: 50%;
+      background: #0a1118;
+      border: 1.5px solid rgba(255, 255, 255, 0.45);
+      vertical-align: middle;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      flex-shrink: 0;
+    }
+    .brand-badge {
+      background: rgba(255,255,255,0.18);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      color: var(--primary);
+      border: 1px solid transparent;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: #f1f5f9;
+      transform: translateY(-1px);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+      color: #fff;
+    }
+    .btn-outline {
+      background: transparent;
+      color: #fff;
+      border-color: rgba(255,255,255,0.3);
+    }
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+    .btn-success {
+      background: #15803d;
+      color: #fff;
+    }
+    .btn-success:hover {
+      background: #166534;
+      color: #fff;
+    }
+
+    /* ZONA DE CARGA / DROP ZONE */
+    .dropzone-container {
+      max-width: 900px;
+      margin: 25px auto 15px auto;
+      padding: 0 20px;
+    }
+    .dropzone {
+      border: 2px dashed var(--accent);
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 30px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow);
+    }
+    .dropzone:hover, .dropzone.dragover {
+      background: rgba(37, 99, 235, 0.05);
+      border-color: #1d4ed8;
+      transform: scale(1.005);
+    }
+    .dropzone-icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+    .dropzone h2 {
+      margin: 0 0 6px 0;
+      font-size: 18px;
+      color: var(--primary);
+    }
+    [data-theme="dark"] .dropzone h2 { color: var(--accent); }
+    .dropzone p {
+      margin: 0 0 14px 0;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .dropzone-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .file-input-hidden {
+      display: none;
+    }
+
+    /* ESTADO DE ARCHIVOS CARGADOS */
+    .status-bar {
+      max-width: 900px;
+      margin: 0 auto 20px auto;
+      padding: 0 20px;
+    }
+    .status-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 13px;
+      box-shadow: var(--shadow);
+    }
+    .file-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .file-tag {
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+
+    /* CONTENEDOR DEL INFORME (DISEÑO OFICIAL CONFORME A LA PLANTILLA DE 10 SECCIONES) */
+    .report-wrapper {
+      max-width: 1050px;
+      margin: 20px auto 60px auto;
+      padding: 0 20px;
+    }
+    .report-sheet {
+      background: var(--bg-card);
+      padding: 45px 55px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    /* CABECERA DEL INFORME */
+    .report-header {
+      margin-bottom: 35px;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 20px;
+    }
+    .report-header-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 25px;
+    }
+    .report-header-text {
+      flex: 1;
+    }
+    .report-header-brand {
+      max-width: 220px;
+      max-height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .brand-report-logo {
+      max-width: 195px;
+      max-height: 95px;
+      object-fit: contain;
+      border-radius: 6px;
+      display: block;
+      transition: transform 0.2s ease;
+    }
+    .brand-report-logo:hover {
+      transform: scale(1.02);
+    }
+    .report-header h1 {
+      margin: 0 0 8px 0;
+      font-size: 26px;
+      color: var(--primary);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    [data-theme="dark"] .report-header h1 { color: #60a5fa; }
+    .report-header .subtitle {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* SECCIONES Y TABLAS */
+    .section {
+      margin-bottom: 36px;
+    }
+    .section-title {
+      color: #1b4478;
+      font-size: 17px;
+      font-weight: 700;
+      margin: 24px 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    [data-theme="dark"] .section-title { color: #60a5fa; }
+    .subsection-title {
+      color: #2c5282;
+      font-size: 15px;
+      font-weight: 700;
+      margin: 20px 0 10px 0;
+    }
+    [data-theme="dark"] .subsection-title { color: #93c5fd; }
+
+    /* TABLAS ESTILO PDF */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+    table.pdf-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      margin-bottom: 4px;
+      background: var(--bg-card);
+    }
+    table.pdf-table th, table.pdf-table td {
+      border: 1px solid var(--border-table);
+      padding: 8px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.pdf-table th {
+      background-color: var(--th-bg);
+      color: var(--th-text);
+      font-weight: 600;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    table.pdf-table td.campo-key {
+      width: 32%;
+      font-weight: 600;
+      background-color: var(--td-key-bg);
+      color: var(--text-main);
+    }
+    table.pdf-table td.campo-val {
+      color: #1e3a8a;
+      font-weight: 500;
+    }
+    [data-theme="dark"] table.pdf-table td.campo-val { color: #93c5fd; }
+
+    /* INSIGNIAS Y ESTADOS */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 11.5px;
+      font-weight: 600;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .badge-cumple { background-color: var(--ok-bg); color: var(--ok); }
+    .badge-no-cumple { background-color: var(--bad-bg); color: var(--bad); }
+    .badge-stopped, .badge-parcial { background-color: var(--warn-bg); color: var(--warn); }
+    .badge-nd { background-color: var(--nd-bg); color: var(--nd); }
+
+    /* SEVERIDADES */
+    .badge-critica { background-color: #7f1d1d; color: #ffffff; }
+    .badge-alta { background-color: #fee2e2; color: #b91c1c; font-weight: 700; }
+    .badge-media { background-color: #fef3c7; color: #b45309; }
+    .badge-baja { background-color: #dbeafe; color: #1d4ed8; }
+    .badge-informativa { background-color: #f1f5f9; color: #475569; }
+
+    /* FICHAS DE VULNERABILIDAD */
+    .vuln-card {
+      margin-bottom: 22px;
+      border: 1px solid var(--border-table);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .vuln-card table.pdf-table {
+      margin: 0;
+    }
+    .vuln-card table.pdf-table th {
+      background-color: #20456e;
+    }
+
+    /* DETALLES DE ANEXOS */
+    details.anexo-details {
+      margin: 10px 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    details.anexo-details summary {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      background: var(--td-key-bg);
+      user-select: none;
+    }
+    details.anexo-details pre {
+      margin: 0;
+      padding: 14px;
+      background: var(--bg-page);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      max-height: 400px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* EDICIÓN EN LÍNEA */
+    [contenteditable="true"] {
+      outline: none;
+      transition: background 0.15s ease;
+      min-height: 18px;
+    }
+    [contenteditable="true"]:hover {
+      background: rgba(37, 99, 235, 0.08);
+      border-radius: 3px;
+    }
+    [contenteditable="true"]:focus {
+      background: rgba(37, 99, 235, 0.14);
+      border-radius: 3px;
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    .edit-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+
+    /* SISTEMA DE NOTIFICACIONES Y SALIDAS DE ERROR */
+    .app-notification {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      z-index: 9999;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 13.5px;
+      font-weight: 500;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+      display: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      max-width: 440px;
+    }
+    .app-notification.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .notif-success { background: #15803d; color: #fff; border: 1px solid #22c55e; }
+    .notif-warn { background: #b45309; color: #fff; border: 1px solid #f59e0b; }
+    .notif-error { background: #b91c1c; color: #fff; border: 1px solid #ef4444; }
+    .notif-info { background: #1e3a8a; color: #fff; border: 1px solid #3b82f6; }
+
+    /* ESTILOS PARA IMPRESIÓN Y EXPORTACIÓN A PDF EXACTA */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 11pt !important;
+      }
+      .app-toolbar, .dropzone-container, .status-bar, .edit-hint, .no-print {
+        display: none !important;
+      }
+      .report-wrapper {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .report-sheet {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+      }
+      table.pdf-table {
+        page-break-inside: auto;
+      }
+      tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+      }
+      th {
+        background-color: #1b3a5f !important;
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      td.campo-key {
+        background-color: #f1f5f9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .section-title {
+        color: #1b4478 !important;
+        page-break-after: avoid;
+      }
+      .report-header-flex {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 20px !important;
+      }
+      .report-header-brand {
+        max-width: 190px !important;
+        max-height: 90px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border: none !important;
+        background: transparent !important;
+      }
+      .brand-report-logo {
+        max-width: 185px !important;
+        max-height: 85px !important;
+        object-fit: contain !important;
+        border: none !important;
+        background: transparent !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .vuln-card {
+        page-break-inside: avoid;
+      }
+      details.anexo-details {
+        border-color: #ccc !important;
+      }
+      details.anexo-details[open] pre {
+        max-height: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE ACCIONES SUPERIOR -->
+  <header class="app-toolbar">
+    <div class="brand">
+      <img id="toolbarLogoImg" src="Logo/3_icono_fondo_oscuro.png" alt="NetSpector" class="toolbar-brand-icon">
+      <span>NetSpector</span>
+      <span class="brand-badge">Audit Suite</span>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn btn-primary" id="btnSelectFolder" title="Seleccionar la carpeta donde tienes tus txt">
+        Seleccionar Carpeta
+      </button>
+      <button class="btn" id="btnSetTodayDate" title="Poner la fecha actual en todos los campos de fecha">
+        Fecha de Hoy
+      </button>
+      <button class="btn btn-success" id="btnPrintPdf" title="Imprimir o exportar en PDF">
+        Exportar a PDF
+      </button>
+      <button class="btn btn-outline" id="btnDownloadHtml" title="Descargar informe HTML autónomo">
+        Guardar HTML
+      </button>
+      <button class="btn btn-outline" id="btnExportTxt" title="Descargar los ficheros .txt para guardarlos en tu carpeta">
+        Exportar TXTs
+      </button>
+      <button class="btn btn-outline" id="btnClearForm" title="Limpiar los campos y empezar con plantilla vacía">
+        Limpiar
+      </button>
+      <button class="btn btn-outline" id="btnToggleTheme" title="Alternar modo oscuro/claro">
+        <span id="themeLabel">Modo Oscuro</span>
+      </button>
+      <a href="https://github.com/tokaiteio1993-1988/NetSpector" target="_blank" rel="noopener noreferrer" class="btn btn-outline" title="Ver repositorio oficial en GitHub">
+        GitHub
+      </a>
+    </div>
+  </header>
+
+  <!-- DROP ZONE / CARGA DE ARCHIVOS -->
+  <section class="dropzone-container no-print">
+    <div class="dropzone" id="dropzone">
+      <h2>Selecciona o arrastra aquí tu carpeta de trabajo</h2>
+      <p>Mete en la carpeta tus resultados (<code>nmap.txt</code>, <code>ss.txt</code>, notas, comandos ejecutados...) y NetSpector rellenará automáticamente todos los campos del informe oficial.</p>
+      <div class="dropzone-buttons">
+        <button class="btn btn-primary" id="btnBrowseFolder">Elegir Carpeta del Equipo</button>
+        <button class="btn" id="btnBrowseFiles">Elegir Archivos TXT Sueltos</button>
+      </div>
+      <input type="file" id="inputFolder" class="file-input-hidden" webkitdirectory directory multiple>
+      <input type="file" id="inputFiles" class="file-input-hidden" multiple accept=".txt,.log,.out,.md">
+    </div>
+  </section>
+
+  <!-- ESTADO DE LA CARPETA CARGADA -->
+  <div class="status-bar no-print" id="statusBar" style="display: none;">
+    <div class="status-card">
+      <div>
+        <strong>Carpeta activa:</strong> <span id="currentFolderName">Ninguna</span> · 
+        <span id="filesCountBadge">0 archivos detectados</span>
+        <div class="file-tags" id="fileTagsList"></div>
+      </div>
+      <button class="btn btn-outline" id="btnReloadFolder" style="color:var(--text-main); border-color:var(--border);">
+        Volver a analizar
+      </button>
+    </div>
+  </div>
+
+  <!-- INFORME COMPLETO CON LA ESTRUCTURA OFICIAL DE 10 SECCIONES -->
+  <main class="report-wrapper">
+    <div class="report-sheet" id="reportContent">
+
+      <div class="report-header">
+        <div class="report-header-flex">
+          <div class="report-header-text">
+            <h1 contenteditable="true" id="rep_titulo_principal">Informe de auditoría de seguridad de un equipo</h1>
+            <p class="subtitle" contenteditable="true">Servicios, configuración y vulnerabilidades — Plantilla con guía de cumplimentación · Versión 1.0</p>
+          </div>
+          <div class="report-header-brand">
+            <img src="Logo/1_logo_principal_fondo_oscuro.png" alt="NetSpector Logo" class="brand-report-logo" id="mainReportLogo">
+          </div>
+        </div>
+      </div>
+
+      <div class="edit-hint no-print">Puedes hacer clic sobre cualquier celda de texto para editarla directamente antes de imprimir o guardar el informe.</div>
+
+      <!-- 1. DATOS GENERALES DEL INFORME -->
+      <section class="section" id="sec-1">
+        <div class="section-title">1. Datos generales del informe</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th style="width: 32%;">Campo</th>
+                <th>Qué escribir</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="campo-key">Título del informe</td><td class="campo-val" contenteditable="true" id="rep_titulo">Auditoría de Seguridad</td></tr>
+              <tr><td class="campo-key">Código / referencia</td><td class="campo-val" contenteditable="true" id="rep_codigo">AUD-2026-10-26-0</td></tr>
+              <tr><td class="campo-key">Fecha de la auditoría</td><td class="campo-val" contenteditable="true" id="rep_fecha">26/10/2026</td></tr>
+              <tr><td class="campo-key">Auditor</td><td class="campo-val" contenteditable="true" id="rep_auditor">No verificado</td></tr>
+              <tr><td class="campo-key">Solicitante / responsable del activo</td><td class="campo-val" contenteditable="true" id="rep_solicitante">No verificado</td></tr>
+              <tr><td class="campo-key">Versión y estado</td><td class="campo-val" contenteditable="true" id="rep_version">V1.0 - Revisado</td></tr>
+              <tr><td class="campo-key">Nivel de confidencialidad</td><td class="campo-val" contenteditable="true" id="rep_confidencialidad">Confidencial</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 2. ALCANCE Y AUTORIZACIÓN -->
+      <section class="section" id="sec-2">
+        <div class="section-title">2. Alcance y autorización</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th style="width: 32%;">Campo</th>
+                <th>Qué escribir</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="campo-key">Activo evaluado</td><td class="campo-val" contenteditable="true" id="rep_activo">Infraestructura Evaluada</td></tr>
+              <tr><td class="campo-key">Elementos fuera de alcance</td><td class="campo-val" contenteditable="true" id="rep_fuera_de_alcance">No verificado</td></tr>
+              <tr><td class="campo-key">Tipo de análisis</td><td class="campo-val" contenteditable="true" id="rep_tipo_de_analisis">Caja blanca</td></tr>
+              <tr><td class="campo-key">Autorización</td><td class="campo-val" contenteditable="true" id="rep_autorizacion">Autorizado</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 3. IDENTIFICACIÓN DEL EQUIPO -->
+      <section class="section" id="sec-3">
+        <div class="section-title">3. Identificación del equipo</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th style="width: 32%;">Campo</th>
+                <th>Qué escribir</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="campo-key">Nombre de host</td><td class="campo-val" contenteditable="true" id="rep_host">No verificado</td></tr>
+              <tr><td class="campo-key">Direccion IP / MAC</td><td class="campo-val" contenteditable="true" id="rep_ip_mac">No verificado</td></tr>
+              <tr><td class="campo-key">Sistema operativo y versión</td><td class="campo-val" contenteditable="true" id="rep_so">No verificado</td></tr>
+              <tr><td class="campo-key">Versión del kernel</td><td class="campo-val" contenteditable="true" id="rep_kernel">No verificado</td></tr>
+              <tr><td class="campo-key">Tipo de equipo</td><td class="campo-val" contenteditable="true" id="rep_tipo_de_equipo">Servidor</td></tr>
+              <tr><td class="campo-key">Función / criticidad</td><td class="campo-val" contenteditable="true" id="rep_funcion">Servidor de infraestructura</td></tr>
+              <tr><td class="campo-key">Propietario</td><td class="campo-val" contenteditable="true" id="rep_propietario">No verificado</td></tr>
+              <tr><td class="campo-key">Última fecha de arranque</td><td class="campo-val" contenteditable="true" id="rep_ultimo_arranque">No verificado</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 4. INVENTARIO DE SERVICIOS Y PUERTOS -->
+      <section class="section" id="sec-4">
+        <div class="section-title">4. Inventario de servicios y puertos</div>
+        <div class="table-container">
+          <table class="pdf-table" id="tabla_inventario">
+            <thead>
+              <tr>
+                <th>Puerto / protocolo</th>
+                <th>Servicio</th>
+                <th>Software y versión</th>
+                <th>Proceso / usuario</th>
+                <th>Accesible desde</th>
+                <th>¿Necesario?</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbody_inventario">
+              <tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Sin datos de puertos. Carga archivos nmap.txt o ss.txt para rellenar automáticamente.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 5. REVISIÓN DE CONFIGURACIÓN -->
+      <section class="section" id="sec-5">
+        <div class="section-title">5. Revisión de configuración</div>
+
+        <div class="subsection-title">5.1 Cuentas y autenticación</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+            </thead>
+            <tbody id="tbody_cfg_5_1"></tbody>
+          </table>
+        </div>
+
+        <div class="subsection-title">5.2 Red y cortafuegos</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+            </thead>
+            <tbody id="tbody_cfg_5_2"></tbody>
+          </table>
+        </div>
+
+        <div class="subsection-title">5.3 Sistema de archivos y permisos</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+            </thead>
+            <tbody id="tbody_cfg_5_3"></tbody>
+          </table>
+        </div>
+
+        <div class="subsection-title">5.4 Actualizaciones y parches</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+            </thead>
+            <tbody id="tbody_cfg_5_4"></tbody>
+          </table>
+        </div>
+
+        <div class="subsection-title">5.5 Registro, auditoría y copias de seguridad</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+            </thead>
+            <tbody id="tbody_cfg_5_5"></tbody>
+          </table>
+        </div>
+
+        <div class="subsection-title">5.6 Servicios concretos (ejemplo: servidor web)</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+            </thead>
+            <tbody id="tbody_cfg_5_6"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 6. VULNERABILIDADES DETECTADAS -->
+      <section class="section" id="sec-6">
+        <div class="section-title">6. Vulnerabilidades detectadas</div>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">Ficha de vulnerabilidad (repetir una por hallazgo)</p>
+        
+        <div id="container_fichas_vuln">
+          <!-- Fichas de vulnerabilidades cargadas dinámicamente -->
+        </div>
+
+        <div class="subsection-title" style="margin-top: 25px;">Tabla resumen de vulnerabilidades</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Título</th>
+                <th>Componente</th>
+                <th>Severidad</th>
+                <th>Estado</th>
+                <th>Prioridad de corrección</th>
+              </tr>
+            </thead>
+            <tbody id="tbody_resumen_vuln">
+              <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Sin vulnerabilidades cargadas.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 7. RESUMEN EJECUTIVO Y VALORACIÓN GLOBAL -->
+      <section class="section" id="sec-7">
+        <div class="section-title">7. Resumen ejecutivo y valoración global</div>
+        <div class="table-container" style="max-width: 450px;">
+          <table class="pdf-table">
+            <thead>
+              <tr><th>Severidad</th><th>Nº de hallazgos</th></tr>
+            </thead>
+            <tbody id="tbody_severidades_cuenta">
+              <tr><td class="campo-key">Crítica</td><td id="cnt_critica" style="font-weight:700;">0</td></tr>
+              <tr><td class="campo-key">Alta</td><td id="cnt_alta" style="font-weight:700;">0</td></tr>
+              <tr><td class="campo-key">Media</td><td id="cnt_media" style="font-weight:700;">0</td></tr>
+              <tr><td class="campo-key">Baja</td><td id="cnt_baja" style="font-weight:700;">0</td></tr>
+              <tr><td class="campo-key">Informativa</td><td id="cnt_info" style="font-weight:700;">0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p contenteditable="true" id="rep_resumen_texto" style="margin-top:12px; line-height:1.6;">Informe técnico de auditoría de seguridad conforme a la plantilla oficial de 10 secciones.</p>
+      </section>
+
+      <!-- 8. PLAN DE REMEDIACIÓN Y RECOMENDACIONES -->
+      <section class="section" id="sec-8">
+        <div class="section-title">8. Plan de remediación y recomendaciones</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th style="width:65px;">Prioridad</th>
+                <th>Hallazgo relacionado</th>
+                <th>Acción recomendada</th>
+                <th>Mitigación temporal</th>
+                <th>Responsable</th>
+                <th>Fecha límite</th>
+                <th>Esfuerzo</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tbody_plan_remediacion">
+              <tr><td colspan="8" style="text-align:center; color:var(--text-muted);">Sin plan de remediación definido.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 9. METODOLOGÍA Y HERRAMIENTAS UTILIZADAS -->
+      <section class="section" id="sec-9">
+        <div class="section-title">9. Metodología y herramientas utilizadas</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th>Herramienta</th>
+                <th>Versión</th>
+                <th>Uso</th>
+                <th>Comando o perfil</th>
+                <th>Fecha y hora</th>
+              </tr>
+            </thead>
+            <tbody id="tbody_herramientas">
+              <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Sin herramientas registradas.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 10. ANEXOS, EVIDENCIAS Y FIRMAS -->
+      <section class="section" id="sec-10">
+        <div class="section-title">10. Anexos, evidencias y firmas</div>
+        
+        <div class="subsection-title">Índice de anexos y evidencias</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th style="width: 120px;">Anexo</th>
+                <th>Contenido</th>
+                <th>Relacionado con</th>
+              </tr>
+            </thead>
+            <tbody id="tbody_anexos_index">
+              <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Sin evidencias adjuntas.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="container_anexos_raw" style="margin: 20px 0;"></div>
+
+        <div class="subsection-title" style="margin-top: 30px;">Control de versiones</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr><th>Versión</th><th>Fecha</th><th>Autor</th><th>Cambios</th></tr>
+            </thead>
+            <tbody>
+              <tr><td contenteditable="true">V1.0</td><td contenteditable="true" id="tbl_ver_fecha">26/10/2026</td><td contenteditable="true" id="tbl_ver_autor">Auditor</td><td contenteditable="true">Versión inicial de auditoría</td></tr>
+              <tr><td contenteditable="true">V1.0 - Revisado</td><td contenteditable="true">26/10/2026</td><td contenteditable="true">Auditor</td><td contenteditable="true">Revisión técnica de evidencias y plan</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="subsection-title" style="margin-top: 25px;">Firmas</div>
+        <div class="table-container">
+          <table class="pdf-table">
+            <thead>
+              <tr><th>Rol</th><th>Nombre</th><th>Fecha</th><th>Firma</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="campo-key">Auditor</td>
+                <td contenteditable="true" id="rep_firma_auditor_nom">No verificado</td>
+                <td contenteditable="true" id="rep_firma_auditor_fec">26/10/2026</td>
+                <td contenteditable="true" id="rep_firma_auditor_sig">No verificado</td>
+              </tr>
+              <tr>
+                <td class="campo-key">Responsable del activo</td>
+                <td contenteditable="true">No verificado</td>
+                <td contenteditable="true">No verificado</td>
+                <td contenteditable="true">No verificado</td>
+              </tr>
+              <tr>
+                <td class="campo-key">Revisor / Dirección</td>
+                <td contenteditable="true">No verificado</td>
+                <td contenteditable="true">No verificado</td>
+                <td contenteditable="true">No verificado</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- ENCUESTA DE SATISFACCIÓN -->
+    <div class="survey-card no-print" id="surveyWidget">
+      <div class="survey-header">
+        <strong style="font-size:16px;">¿Te ha servido la herramienta NetSpector para tu informe?</strong>
+      </div>
+      <div class="survey-actions" id="surveyButtons">
+        <button class="btn btn-survey-yes" id="btnSurveyYes">Sí, me ha servido</button>
+        <button class="btn btn-survey-no" id="btnSurveyNo">No me ha servido</button>
+      </div>
+      <div id="surveyFeedbackYes" style="display:none; margin-top:14px; color:var(--ok); font-size:15px; font-weight:600;">
+        ¡Muchas gracias por utilizar la aplicación! Esperamos que te sea de gran utilidad en todas tus auditorías.
+      </div>
+      <div id="surveyFeedbackNo" style="display:none; margin-top:14px;">
+        <p style="margin:0 0 6px 0; color:var(--bad); font-weight:600; font-size:15px;">
+          Lamentamos que la herramienta no haya cumplido tus expectativas.
+        </p>
+        <p style="margin:0 0 14px 0; font-size:13px; color:var(--text-muted);">
+          Por favor, entra a nuestro repositorio de GitHub para dejarnos una reseña o sugerencia para que podamos mejorarla:
+        </p>
+        <a href="https://github.com/tokaiteio1993-1988/NetSpector/issues" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:13px;">
+          Dejar reseña o sugerencia en GitHub
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // ESTADO GLOBAL DE LA APLICACIÓN
+    const AppState = {
+      files: new Map(),
+      general: {},
+      inventario: [],
+      controles: [],
+      hallazgos: [],
+      herramientas: [],
+      serviciosMeta: {},
+      anexos: []
+    };
+
+    const ND = "No verificado";
+
+    // PLANTILLA GENÉRICA DE CONTROLES
+    const GENERIC_CONTROLES = `[5.1 Cuentas y autenticación]
+Acceso SSH directo como root deshabilitado | grep PermitRootLogin /etc/ssh/sshd_config | PermitRootLogin no | Cumple
+Política de contraseñas (longitud, caducidad) | /etc/login.defs, /etc/security/pwquality.conf | PASS_MAX_DAYS: 90<br>PASS_MIN_DAYS: 7<br>PASS_WARN_AGE: 14 | Cumple
+Cuentas sin contraseña o inactivas | awk -F: '($2==""){print $1}' /etc/shadow | Ninguna | Cumple
+Usuarios con privilegios sudo | getent group sudo | Verificado | Cumple
+Autenticación multifactor en acceso remoto | Revisión de PAM / VPN | No implantada | No cumple
+
+[5.2 Red y cortafuegos]
+Cortafuegos activo con política por defecto restrictiva | ufw status verbose / iptables -L | No activo | No cumple
+Servicios escuchando solo donde corresponde | ss -tulpn | Verificado según inventario | Cumple
+IPv6 y reenvío de paquetes controlados | sysctl net.ipv6.conf.all.disable_ipv6 net.ipv4.ip_forward | ip_forward = 0 | Cumple
+
+[5.3 Sistema de archivos y permisos]
+Permisos de ficheros sensibles (/etc/shadow, claves privadas) | ls -l /etc/shadow | 1 root shadow 1544 /etc/shadow | Cumple
+Ficheros con permisos de escritura global | find / -xdev -type f -perm -0002 | Ninguno | Cumple
+Particiones separadas / opciones de montaje (noexec, nosuid) | mount, /etc/fstab | No verificado | No verificado
+
+[5.4 Actualizaciones y parches]
+Sistema actualizado | apt list --upgradable / Linux Update | No verificado | No verificado
+Actualizaciones automáticas de seguridad | unattended-upgrades | No verificado | No verificado
+
+[5.5 Registro, auditoría y copias de seguridad]
+Registro de eventos activo (rsyslog / journald / auditd) | systemctl status auditd | No verificado | No verificado
+Logs enviados a un servidor central | /etc/rsyslog.d/ | no | No cumple
+Sincronización horaria (NTP) | timedatectl | Sincronizado | Cumple
+Copias de seguridad probadas | Entrevista y evidencia del último restore | No verificado | No verificado
+
+[5.6 Servicios concretos (ejemplo: servidor web)]
+Versión del servidor oculta | Curl –I IP | Expuesta | No cumple
+HTTPS con TLS 1.2 o superior | nmap --script ssl-enum-ciphers -p 443 | Habilitado | Cumple
+Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente | No cumple
+`;
+
+    // FUNCIONES DE NORMALIZACIÓN Y PARSEO
+    function normalizeStr(str) {
+      if (!str) return "";
+      return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined || str === "") return ND;
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function parseKeyValue(content) {
+      const result = {};
+      let currentKey = null;
+      const lines = content.split(/\r?\n/);
+      for (let line of lines) {
+        if (!line.trim() || line.trim().startsWith("#")) continue;
+        const match = line.match(/^([^:\s][^:]{0,60}):\s*(.*)$/);
+        if (match && !line.startsWith(" ") && !line.startsWith("\t")) {
+          currentKey = normalizeStr(match[1]);
+          result[currentKey] = match[2].trim();
+        } else if (currentKey) {
+          result[currentKey] += "\n" + line.trim();
+        }
+      }
+      return result;
+    }
+
+    function parseBlocks(content) {
+      const rawBlocks = content.split(/^\s*-{3,}\s*$/m);
+      const blocks = [];
+      for (let raw of rawBlocks) {
+        if (!raw.trim()) continue;
+        const kv = parseKeyValue(raw);
+        if (Object.keys(kv).length > 0) blocks.push(kv);
+      }
+      return blocks;
+    }
+
+    function parseTablePipe(content, colsCount) {
+      const rows = [];
+      const lines = content.split(/\r?\n/);
+      for (let line of lines) {
+        if (!line.trim() || line.trim().startsWith("#")) continue;
+        const parts = line.split("|").map(p => p.trim());
+        while (parts.length < colsCount) parts.push("");
+        rows.push(parts.slice(0, colsCount));
+      }
+      return rows;
+    }
+
+    function parseControles(content) {
+      const sections = [];
+      let currentSection = null;
+      const lines = content.split(/\r?\n/);
+      for (let line of lines) {
+        if (!line.trim() || line.trim().startsWith("#")) continue;
+        const headerMatch = line.match(/^\s*\[(.+)\]\s*$/);
+        if (headerMatch) {
+          currentSection = { titulo: headerMatch[1].trim(), filas: [] };
+          sections.push(currentSection);
+        } else if (currentSection) {
+          const parts = line.split("|").map(p => p.trim());
+          while (parts.length < 4) parts.push("");
+          currentSection.filas.push(parts.slice(0, 4));
+        }
+      }
+      return sections;
+    }
+
+    function parseNmap(content) {
+      const ports = {};
+      const lines = content.split(/\r?\n/);
+      for (let line of lines) {
+        const m = line.match(/^(\d+)\/(tcp|udp)\s+(open\S*)\s+(\S+)\s*(.*)$/);
+        if (m) {
+          const portNum = parseInt(m[1], 10);
+          const proto = m[2].toLowerCase();
+          const servicio = m[4];
+          const version = m[5].trim();
+          ports[`${portNum}/${proto}`] = { puerto: portNum, proto, servicio, version };
+        }
+      }
+      return ports;
+    }
+
+    function parseSs(content) {
+      const sockets = {};
+      const lines = content.split(/\r?\n/);
+      for (let line of lines) {
+        if (!line.match(/LISTEN|UNCONN|^udp/i)) continue;
+        const tokens = line.trim().split(/\s+/);
+        if (!tokens || tokens.length < 4) continue;
+        const protoRaw = tokens[0].toLowerCase();
+        if (!protoRaw.startsWith("tcp") && !protoRaw.startsWith("udp")) continue;
+        const proto = protoRaw.startsWith("udp") ? "udp" : "tcp";
+
+        let localAddrToken = null;
+        for (let i = 1; i < tokens.length; i++) {
+          if (tokens[i].match(/^\S*:(\d+|\*)$/)) {
+            localAddrToken = tokens[i];
+            break;
+          }
+        }
+        if (!localAddrToken) continue;
+
+        const lastColon = localAddrToken.lastIndexOf(":");
+        const ip = localAddrToken.substring(0, lastColon).replace(/^\[|\]$/g, "");
+        const portStr = localAddrToken.substring(lastColon + 1);
+        const port = parseInt(portStr, 10);
+        if (isNaN(port)) continue;
+
+        let proc = "";
+        const procMatch = line.match(/users:\(\("([^"]+)"/) || line.match(/users:\(\((?:'|")?([^,'"]+)/) || line.match(/\d+\/(\S+)\s*$/);
+        if (procMatch) {
+          proc = procMatch[1];
+        }
+
+        const isLocalOnly = (ip === "127.0.0.1" || ip === "::1" || ip === "localhost");
+        sockets[`${port}/${proto}`] = {
+          puerto: port,
+          proto,
+          bind: ip || "*",
+          acceso: isLocalOnly ? "Solo localhost" : "Red local",
+          proceso: proc
+        };
+      }
+      return sockets;
+    }
+
+    function autoDetectTxtContents(fileName, content) {
+      const lowerName = fileName.toLowerCase();
+      const detected = { type: "generic", data: {} };
+
+      if (lowerName.includes("nmap") || content.includes("Nmap scan report") || content.includes("PORT   STATE SERVICE")) {
+        detected.type = "nmap";
+        detected.ports = parseNmap(content);
+        const hostMatch = content.match(/Nmap scan report for (?:([^\s()]+)\s+\(([\d.]+)\)|([\d.]+)|([^\s()]+))/);
+        if (hostMatch) {
+          detected.data.host = hostMatch[1] || hostMatch[4] || hostMatch[3] || "";
+          detected.data.ip = hostMatch[2] || hostMatch[3] || "";
+        }
+        const macMatch = content.match(/MAC Address:\s*([0-9A-Fa-f:]+)/);
+        if (macMatch) detected.data.mac = macMatch[1];
+        const osMatch = content.match(/(?:OS details|Running|Service Info: OS):\s*([^\r\n]+)/);
+        if (osMatch) detected.data.so = osMatch[1].trim();
+        return detected;
+      }
+
+      if (lowerName.includes("ss") || lowerName.includes("netstat") || content.includes("Local Address:Port") || (content.includes("LISTEN") && content.includes("tcp"))) {
+        detected.type = "ss";
+        detected.sockets = parseSs(content);
+        return detected;
+      }
+
+      if (lowerName.includes("hostname") || lowerName.includes("uname") || lowerName.includes("os-release") || lowerName.includes("issue")) {
+        detected.type = "sysinfo";
+        if (content.includes("GNU/Linux") || content.includes("Linux ")) {
+          detected.data.kernel = content.trim().split("\n")[0];
+        }
+        const m = content.match(/(Ubuntu|Debian|CentOS|Red Hat|Fedora|Arch|Windows)[^\n\r"]*/i);
+        if (m) detected.data.so = m[0].trim();
+        return detected;
+      }
+
+      if (lowerName.includes("perm") || lowerName.includes("writable") || lowerName.includes("find")) {
+        const lines = content.split("\n").map(l => l.trim()).filter(l => l.startsWith("/"));
+        if (lines.length > 0) {
+          detected.type = "find_writable";
+          detected.data.count = lines.length;
+          detected.data.paths = lines;
+          return detected;
+        }
+      }
+
+      if (lowerName.includes("login.defs") || content.includes("PASS_MAX_DAYS")) {
+        detected.type = "login_defs";
+        const maxD = (content.match(/PASS_MAX_DAYS\s+(\d+)/) || [])[1] || "";
+        const minD = (content.match(/PASS_MIN_DAYS\s+(\d+)/) || [])[1] || "";
+        const warnA = (content.match(/PASS_WARN_AGE\s+(\d+)/) || [])[1] || "";
+        detected.data.passPolicy = `PASS_MAX_DAYS: ${maxD}<br>PASS_MIN_DAYS: ${minD}<br>PASS_WARN_AGE: ${warnA}`;
+        return detected;
+      }
+
+      return detected;
+    }
+
+    function renderReport() {
+      const g = AppState.general;
+      const getG = (key, fallback = ND) => (g[key] && g[key].trim()) ? g[key].trim() : fallback;
+
+      document.getElementById("rep_titulo").innerText = getG("titulo", "Auditoría de Seguridad");
+      document.getElementById("rep_codigo").innerText = getG("codigo", "AUD-2026-10-26-0");
+      document.getElementById("rep_fecha").innerText = getG("fecha", "26/10/2026");
+      document.getElementById("rep_auditor").innerText = getG("auditor", ND);
+      document.getElementById("rep_solicitante").innerText = getG("solicitante", ND);
+      document.getElementById("rep_version").innerText = getG("version", "V1.0 - Revisado");
+      document.getElementById("rep_confidencialidad").innerText = getG("confidencialidad", "Confidencial");
+
+      document.getElementById("rep_activo").innerText = getG("activo", "Infraestructura Evaluada");
+      document.getElementById("rep_fuera_de_alcance").innerText = getG("fuera_de_alcance", ND);
+      document.getElementById("rep_tipo_de_analisis").innerText = getG("tipo_de_analisis", "Caja blanca");
+      document.getElementById("rep_autorizacion").innerText = getG("autorizacion", "Autorizado");
+
+      document.getElementById("rep_host").innerText = getG("host", ND);
+      document.getElementById("rep_ip_mac").innerText = getG("ip_mac", ND);
+      document.getElementById("rep_so").innerText = getG("so", ND);
+      document.getElementById("rep_kernel").innerText = getG("kernel", ND);
+      document.getElementById("rep_tipo_de_equipo").innerText = getG("tipo_de_equipo", "Servidor");
+      document.getElementById("rep_funcion").innerText = getG("funcion", "Servidor de infraestructura");
+      document.getElementById("rep_propietario").innerText = getG("propietario", ND);
+      document.getElementById("rep_ultimo_arranque").innerText = getG("ultimo_arranque", ND);
+
+      document.getElementById("rep_resumen_texto").innerText = getG("resumen", "Informe técnico de auditoría de seguridad conforme a la plantilla oficial de 10 secciones.");
+
+      document.getElementById("rep_firma_auditor_nom").innerText = getG("auditor", ND);
+      document.getElementById("rep_firma_auditor_fec").innerText = getG("fecha", "26/10/2026");
+      document.getElementById("rep_firma_auditor_sig").innerText = getG("firma_auditor", getG("auditor", ND));
+      document.getElementById("tbl_ver_fecha").innerText = getG("fecha", "26/10/2026");
+      document.getElementById("tbl_ver_autor").innerText = getG("auditor", ND);
+
+      renderInventario();
+      renderControles();
+      renderVulnerabilidades();
+      renderPlanRemediacion();
+      renderHerramientas();
+      renderAnexos();
+    }
+
+    function renderInventario() {
+      const tbody = document.getElementById("tbody_inventario");
+      tbody.innerHTML = "";
+      if (AppState.inventario.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Sin datos de puertos. Carga archivos nmap.txt o ss.txt para rellenar automáticamente.</td></tr>`;
+        return;
+      }
+
+      for (let item of AppState.inventario) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="font-weight:600;" contenteditable="true">${escapeHtml(item.puerto)}</td>
+          <td contenteditable="true">${escapeHtml(item.servicio)}</td>
+          <td contenteditable="true">${escapeHtml(item.software)}</td>
+          <td contenteditable="true">${escapeHtml(item.proceso)}</td>
+          <td contenteditable="true">${escapeHtml(item.acceso)}</td>
+          <td contenteditable="true">${escapeHtml(item.necesario)}</td>
+          <td contenteditable="true">${escapeHtml(item.observaciones)}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function getEstadoBadgeClass(estado) {
+      const n = normalizeStr(estado || "");
+      if (n.startsWith("cumple") || n === "ok") return "badge-cumple";
+      if (n.startsWith("no_cumple") || n === "fallo" || n === "ko") return "badge-no-cumple";
+      if (n.includes("stopped") || n.includes("parcial") || n.includes("revision")) return "badge-stopped";
+      return "badge-nd";
+    }
+
+    function renderControles() {
+      const secMap = {
+        "5.1": document.getElementById("tbody_cfg_5_1"),
+        "5.2": document.getElementById("tbody_cfg_5_2"),
+        "5.3": document.getElementById("tbody_cfg_5_3"),
+        "5.4": document.getElementById("tbody_cfg_5_4"),
+        "5.5": document.getElementById("tbody_cfg_5_5"),
+        "5.6": document.getElementById("tbody_cfg_5_6"),
+      };
+
+      for (let k in secMap) secMap[k].innerHTML = "";
+
+      for (let sec of AppState.controles) {
+        let targetTbody = null;
+        for (let numKey in secMap) {
+          if (sec.titulo.startsWith(numKey)) {
+            targetTbody = secMap[numKey];
+            break;
+          }
+        }
+        if (!targetTbody) targetTbody = secMap["5.1"];
+
+        for (let row of sec.filas) {
+          const tr = document.createElement("tr");
+          const estado = row[3] || ND;
+          const badgeCls = getEstadoBadgeClass(estado);
+          tr.innerHTML = `
+            <td style="font-weight:500;" contenteditable="true">${row[0]}</td>
+            <td style="font-family:monospace; font-size:12px;" contenteditable="true">${row[1]}</td>
+            <td contenteditable="true">${row[2]}</td>
+            <td style="text-align:center;"><span class="badge ${badgeCls}" contenteditable="true">${escapeHtml(estado)}</span></td>
+          `;
+          targetTbody.appendChild(tr);
+        }
+      }
+    }
+
+    function getSeveridadBadgeClass(sev) {
+      const s = normalizeStr(sev || "");
+      if (s.startsWith("critic")) return "badge-critica";
+      if (s.startsWith("alta")) return "badge-alta";
+      if (s.startsWith("media")) return "badge-media";
+      if (s.startsWith("baja")) return "badge-baja";
+      if (s.startsWith("inform")) return "badge-informativa";
+      return "badge-nd";
+    }
+
+    function renderVulnerabilidades() {
+      const containerFichas = document.getElementById("container_fichas_vuln");
+      const tbodyResumen = document.getElementById("tbody_resumen_vuln");
+      containerFichas.innerHTML = "";
+      tbodyResumen.innerHTML = "";
+
+      const counts = { "Crítica": 0, "Alta": 0, "Media": 0, "Baja": 0, "Informativa": 0 };
+
+      if (AppState.hallazgos.length === 0) {
+        tbodyResumen.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Sin vulnerabilidades registradas.</td></tr>`;
+      }
+
+      for (let i = 0; i < AppState.hallazgos.length; i++) {
+        const h = AppState.hallazgos[i];
+        const hid = h.id || `VUL-${String(i + 1).padStart(2, "0")}`;
+        const sevNorm = (h.severidad || "").trim();
+        const sLower = normalizeStr(sevNorm);
+        
+        if (sLower.startsWith("critic")) counts["Crítica"]++;
+        else if (sLower.startsWith("alta")) counts["Alta"]++;
+        else if (sLower.startsWith("media")) counts["Media"]++;
+        else if (sLower.startsWith("baja")) counts["Baja"]++;
+        else counts["Informativa"]++;
+
+        const badgeSev = getSeveridadBadgeClass(sevNorm);
+
+        const card = document.createElement("div");
+        card.className = "vuln-card";
+        card.innerHTML = `
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th style="width:32%;">Campo</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="campo-key">ID del hallazgo</td><td style="font-weight:700; color:var(--primary);" contenteditable="true">${escapeHtml(hid)}</td></tr>
+              <tr><td class="campo-key">Título</td><td style="font-weight:600;" contenteditable="true">${escapeHtml(h.titulo || ND)}</td></tr>
+              <tr><td class="campo-key">Identificador CVE</td><td contenteditable="true">${escapeHtml(h.cve || ND)}</td></tr>
+              <tr><td class="campo-key">Componente afectado</td><td contenteditable="true">${escapeHtml(h.componente || ND)}</td></tr>
+              <tr><td class="campo-key">Descripción</td><td contenteditable="true">${escapeHtml(h.descripcion || ND)}</td></tr>
+              <tr><td class="campo-key">Cómo se detectó</td><td contenteditable="true">${escapeHtml(h.deteccion || ND)}</td></tr>
+              <tr><td class="campo-key">Evidencia</td><td contenteditable="true">${escapeHtml(h.evidencia || ND)}</td></tr>
+              <tr><td class="campo-key">Severidad (CVSS)</td><td><span class="badge ${badgeSev}" contenteditable="true">${escapeHtml(sevNorm || ND)}</span></td></tr>
+              <tr><td class="campo-key">Probabilidad e impacto</td><td contenteditable="true">${escapeHtml(h.probabilidad_e_impacto || h.probabilidad || ND)}</td></tr>
+              <tr><td class="campo-key">Exploit público</td><td contenteditable="true">${escapeHtml(h.exploit || ND)}</td></tr>
+              <tr><td class="campo-key">Estado</td><td contenteditable="true">${escapeHtml(h.estado || ND)}</td></tr>
+              <tr><td class="campo-key">Recomendación</td><td contenteditable="true">${escapeHtml(h.recomendacion || ND)}</td></tr>
+            </tbody>
+          </table>
+        `;
+        containerFichas.appendChild(card);
+
+        const trRes = document.createElement("tr");
+        trRes.innerHTML = `
+          <td style="font-weight:700;"><a href="#${hid}" style="color:var(--accent); text-decoration:none;">${escapeHtml(hid)}</a></td>
+          <td style="font-weight:500;" contenteditable="true">${escapeHtml(h.titulo || ND)}</td>
+          <td contenteditable="true">${escapeHtml(h.componente || ND)}</td>
+          <td><span class="badge ${badgeSev}" contenteditable="true">${escapeHtml(sevNorm || ND)}</span></td>
+          <td contenteditable="true">${escapeHtml(h.estado || ND)}</td>
+          <td style="text-align:center; font-weight:700;" contenteditable="true">${escapeHtml(h.prioridad || "1")}</td>
+        `;
+        tbodyResumen.appendChild(trRes);
+      }
+
+      document.getElementById("cnt_critica").innerText = counts["Crítica"];
+      document.getElementById("cnt_alta").innerText = counts["Alta"];
+      document.getElementById("cnt_media").innerText = counts["Media"];
+      document.getElementById("cnt_baja").innerText = counts["Baja"];
+      document.getElementById("cnt_info").innerText = counts["Informativa"];
+    }
+
+    function renderPlanRemediacion() {
+      const tbody = document.getElementById("tbody_plan_remediacion");
+      tbody.innerHTML = "";
+
+      if (AppState.hallazgos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted);">Sin plan de remediación definido.</td></tr>`;
+        return;
+      }
+
+      const ordenados = [...AppState.hallazgos].sort((a, b) => {
+        const pa = parseInt(a.prioridad || "9", 10);
+        const pb = parseInt(b.prioridad || "9", 10);
+        return pa - pb;
+      });
+
+      for (let h of ordenados) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="text-align:center; font-weight:700;" contenteditable="true">${escapeHtml(h.prioridad || "1")}</td>
+          <td style="font-weight:600; color:var(--primary);" contenteditable="true">${escapeHtml(h.id || ND)}</td>
+          <td contenteditable="true">${escapeHtml(h.accion || h.recomendacion || ND)}</td>
+          <td contenteditable="true">${escapeHtml(h.mitigacion || ND)}</td>
+          <td contenteditable="true">${escapeHtml(h.responsable || "Sistemas")}</td>
+          <td contenteditable="true">${escapeHtml(h.fecha_limite || document.getElementById("rep_fecha").innerText)}</td>
+          <td contenteditable="true">${escapeHtml(h.esfuerzo || "Medio")}</td>
+          <td><span class="badge badge-stopped" contenteditable="true">${escapeHtml(h.estado_plan || "Pendiente")}</span></td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function renderHerramientas() {
+      const tbody = document.getElementById("tbody_herramientas");
+      tbody.innerHTML = "";
+
+      if (AppState.herramientas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Sin herramientas registradas.</td></tr>`;
+        return;
+      }
+
+      for (let row of AppState.herramientas) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="font-weight:600;" contenteditable="true">${escapeHtml(row[0])}</td>
+          <td contenteditable="true">${escapeHtml(row[1] || ND)}</td>
+          <td contenteditable="true">${escapeHtml(row[2] || ND)}</td>
+          <td style="font-family:monospace; font-size:12px;" contenteditable="true">${escapeHtml(row[3] || "")}</td>
+          <td contenteditable="true">${escapeHtml(row[4] || "")}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function renderAnexos() {
+      const tbodyIdx = document.getElementById("tbody_anexos_index");
+      const contRaw = document.getElementById("container_anexos_raw");
+      tbodyIdx.innerHTML = "";
+      contRaw.innerHTML = "";
+
+      if (AppState.anexos.length === 0) {
+        tbodyIdx.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Sin evidencias adjuntas.</td></tr>`;
+        return;
+      }
+
+      let anexoNum = 1;
+      for (let anexo of AppState.anexos) {
+        const aId = `Anexo ${anexoNum}`;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="font-weight:700;">${aId}</td>
+          <td style="font-weight:500;" contenteditable="true">${escapeHtml(anexo.nombre)}</td>
+          <td contenteditable="true">${escapeHtml(anexo.relacionado || "Sección 4 y 5")}</td>
+        `;
+        tbodyIdx.appendChild(tr);
+
+        const details = document.createElement("details");
+        details.className = "anexo-details";
+        details.innerHTML = `
+          <summary>${aId} · ${escapeHtml(anexo.nombre)}</summary>
+          <pre>${escapeHtml(anexo.contenido)}</pre>
+        `;
+        contRaw.appendChild(details);
+
+        anexoNum++;
+      }
+    }
+
+    // PROCESAR CARPETA Y FICHEROS DUMPED
+    function processParsedData(filesMap) {
+      AppState.files = filesMap;
+      AppState.anexos = [];
+      const nmaps = {};
+      const sss = {};
+      const extraServicios = {};
+
+      if (filesMap.has("general.txt")) {
+        AppState.general = parseKeyValue(filesMap.get("general.txt"));
+      } else {
+        AppState.general = {};
+      }
+
+      if (filesMap.has("servicios.txt")) {
+        const servRows = parseTablePipe(filesMap.get("servicios.txt"), 3);
+        for (let r of servRows) {
+          extraServicios[r[0]] = { necesario: r[1] || ND, obs: r[2] || "" };
+        }
+      }
+
+      if (filesMap.has("controles.txt")) {
+        AppState.controles = parseControles(filesMap.get("controles.txt"));
+      } else {
+        AppState.controles = parseControles(GENERIC_CONTROLES);
+      }
+
+      if (filesMap.has("hallazgos.txt")) {
+        AppState.hallazgos = parseBlocks(filesMap.get("hallazgos.txt"));
+      } else {
+        AppState.hallazgos = [];
+      }
+
+      if (filesMap.has("herramientas.txt")) {
+        AppState.herramientas = parseTablePipe(filesMap.get("herramientas.txt"), 5);
+      } else {
+        AppState.herramientas = [];
+      }
+
+      for (let [fName, content] of filesMap.entries()) {
+        const auto = autoDetectTxtContents(fName, content);
+        if (auto.type === "nmap") {
+          Object.assign(nmaps, auto.ports);
+          if (auto.data.host && !AppState.general.host) AppState.general.host = auto.data.host;
+          if (auto.data.ip && !AppState.general.ip_mac) {
+            AppState.general.ip_mac = auto.data.ip + (auto.data.mac ? ` / ${auto.data.mac}` : "");
+          }
+          if (auto.data.so && !AppState.general.so) AppState.general.so = auto.data.so;
+        } else if (auto.type === "ss") {
+          Object.assign(sss, auto.sockets);
+        } else if (auto.type === "sysinfo") {
+          if (auto.data.kernel && !AppState.general.kernel) AppState.general.kernel = auto.data.kernel;
+          if (auto.data.so && !AppState.general.so) AppState.general.so = auto.data.so;
+        }
+
+        if (!["general.txt", "hallazgos.txt", "controles.txt", "servicios.txt", "herramientas.txt"].includes(fName.toLowerCase())) {
+          let relacion = "Sección 4 y 5";
+          if (fName.toLowerCase().includes("nmap")) relacion = "Sección 4 (Inventario)";
+          else if (fName.toLowerCase().includes("ss") || fName.toLowerCase().includes("netstat")) relacion = "Sección 4 y 5.2";
+          else if (fName.toLowerCase().includes("find") || fName.toLowerCase().includes("perm")) relacion = "Sección 5.3 y Permisos";
+
+          AppState.anexos.push({
+            nombre: fName,
+            contenido: content,
+            relacionado: relacion
+          });
+        }
+      }
+
+      const allPortKeys = new Set([...Object.keys(nmaps), ...Object.keys(sss), ...Object.keys(extraServicios)]);
+      const listaPuertos = [];
+      for (let pKey of allPortKeys) {
+        const [pNumStr, proto] = pKey.split("/");
+        const pNum = parseInt(pNumStr, 10) || 0;
+        const nmapInfo = nmaps[pKey] || {};
+        const ssInfo = sss[pKey] || {};
+        const extra = extraServicios[pKey] || {};
+
+        listaPuertos.push({
+          puerto: pKey,
+          puertoNum: pNum,
+          proto: proto || "tcp",
+          servicio: nmapInfo.servicio || ND,
+          software: nmapInfo.version || ND,
+          proceso: ssInfo.proceso || (nmapInfo.servicio ? `${nmapInfo.servicio}/root` : ND),
+          acceso: ssInfo.acceso || "Red local",
+          necesario: extra.necesario || ND,
+          observaciones: extra.obs || (nmapInfo.version ? `Servicio ${nmapInfo.servicio} versión ${nmapInfo.version}.` : "")
+        });
+      }
+
+      listaPuertos.sort((a, b) => a.puertoNum - b.puertoNum);
+      AppState.inventario = listaPuertos;
+
+      updateStatusBar(filesMap);
+      renderReport();
+    }
+
+    function updateStatusBar(filesMap) {
+      const statusBar = document.getElementById("statusBar");
+      const filesCountBadge = document.getElementById("filesCountBadge");
+      const fileTagsList = document.getElementById("fileTagsList");
+
+      statusBar.style.display = "block";
+      filesCountBadge.innerText = `${filesMap.size} ficheros procesados`;
+      fileTagsList.innerHTML = "";
+
+      for (let fName of filesMap.keys()) {
+        const tag = document.createElement("span");
+        tag.className = "file-tag";
+        tag.innerText = fName;
+        fileTagsList.appendChild(tag);
+      }
+    }
+
+    // SISTEMA DE NOTIFICACIONES Y MENSAJES DE ERROR
+    function showAppNotification(message, type = "info") {
+      let notif = document.getElementById("appNotification");
+      if (!notif) {
+        notif = document.createElement("div");
+        notif.id = "appNotification";
+        notif.className = "app-notification no-print";
+        document.body.appendChild(notif);
+      }
+      notif.innerText = message;
+      notif.className = `app-notification no-print notif-${type} active`;
+      clearTimeout(notif._timer);
+      notif._timer = setTimeout(() => {
+        notif.className = notif.className.replace(" active", "");
+      }, 5000);
+    }
+
+    // CARGAR ARCHIVOS DESDE HTML5 FILE API
+    async function loadFromFilesList(fileList, folderName = "Carpeta seleccionada") {
+      try {
+        const filesMap = new Map();
+        let errorCount = 0;
+        let validExtCount = 0;
+
+        for (let i = 0; i < fileList.length; i++) {
+          const f = fileList[i];
+          const lower = f.name.toLowerCase();
+          if (lower.endsWith(".txt") || lower.endsWith(".log") || lower.endsWith(".out") || lower.endsWith(".md")) {
+            validExtCount++;
+            try {
+              const text = await f.text();
+              filesMap.set(f.name, text);
+            } catch(err) {
+              console.error("Error leyendo archivo:", f.name, err);
+              errorCount++;
+            }
+          }
+        }
+
+        document.getElementById("currentFolderName").innerText = folderName;
+
+        if (filesMap.size === 0) {
+          showAppNotification("Aviso: No se encontraron archivos de texto compatibles (.txt, .log, .md, .out) en la selección.", "warn");
+        } else if (errorCount > 0) {
+          showAppNotification(`Procesados ${filesMap.size} archivo(s). Hubo error al leer ${errorCount} archivo(s).`, "warn");
+        } else {
+          showAppNotification(`Se han cargado y analizado ${filesMap.size} archivo(s) de evidencias correctamente.`, "success");
+        }
+
+        processParsedData(filesMap);
+      } catch (err) {
+        console.error("Error general en loadFromFilesList:", err);
+        showAppNotification("Error al procesar la lista de archivos: " + err.message, "error");
+      }
+    }
+
+    // FILE SYSTEM ACCESS API PARA NAVEGADORES MODERNOS (CHROME, EDGE)
+    async function selectFolderModern() {
+      if ("showDirectoryPicker" in window) {
+        try {
+          const dirHandle = await window.showDirectoryPicker();
+          const filesMap = new Map();
+          let errorCount = 0;
+
+          for await (const entry of dirHandle.values()) {
+            if (entry.kind === "file") {
+              const file = await entry.getFile();
+              const lower = file.name.toLowerCase();
+              if (lower.endsWith(".txt") || lower.endsWith(".log") || lower.endsWith(".out") || lower.endsWith(".md")) {
+                try {
+                  const text = await file.text();
+                  filesMap.set(file.name, text);
+                } catch(err) {
+                  console.error("Error leyendo archivo:", file.name, err);
+                  errorCount++;
+                }
+              }
+            }
+          }
+
+          document.getElementById("currentFolderName").innerText = dirHandle.name;
+
+          if (filesMap.size === 0) {
+            showAppNotification(`Aviso: La carpeta '${dirHandle.name}' no contiene archivos .txt, .log o .md.`, "warn");
+          } else if (errorCount > 0) {
+            showAppNotification(`Cargada carpeta '${dirHandle.name}' (${filesMap.size} archivos). Error en ${errorCount} archivo(s).`, "warn");
+          } else {
+            showAppNotification(`Carpeta '${dirHandle.name}' analizada con éxito (${filesMap.size} archivos detectados).`, "success");
+          }
+
+          processParsedData(filesMap);
+          return;
+        } catch (err) {
+          if (err.name !== "AbortError") {
+            console.warn("Fallo showDirectoryPicker, recurriendo a input tradicional:", err);
+            showAppNotification("Selector nativo no disponible o cancelado. Abriendo selector alternativo...", "info");
+          } else {
+            return;
+          }
+        }
+      }
+      document.getElementById("inputFolder").click();
+    }
+
+    // PONER FECHA ACTUAL EN TODOS LOS CAMPOS (-f)
+    function setTodayDateInAllFields() {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const todayStr = `${dd}/${mm}/${yyyy}`;
+      const isoDate = `${yyyy}-${mm}-${dd}`;
+
+      document.getElementById("rep_fecha").innerText = todayStr;
+      document.getElementById("tbl_ver_fecha").innerText = todayStr;
+      document.getElementById("rep_firma_auditor_fec").innerText = todayStr;
+
+      // Código automático AUD-YYYY-MM-DD-0 si está con placeholder
+      const currentCode = document.getElementById("rep_codigo").innerText;
+      if (!currentCode || currentCode.includes("YYYY") || currentCode.startsWith("AUD-")) {
+        document.getElementById("rep_codigo").innerText = `AUD-${isoDate}-0`;
+      }
+    }
+
+    // LIMPIAR FORMULARIO
+    function clearFormData() {
+      AppState.files = new Map();
+      AppState.general = {};
+      AppState.inventario = [];
+      AppState.controles = parseControles(GENERIC_CONTROLES);
+      AppState.hallazgos = [];
+      AppState.herramientas = [];
+      AppState.anexos = [];
+      document.getElementById("statusBar").style.display = "none";
+      document.getElementById("currentFolderName").innerText = "Ninguna";
+      renderReport();
+    }
+
+    // CONFIGURACIÓN DE EVENT LISTENERS
+    document.addEventListener("DOMContentLoaded", () => {
+      const dropzone = document.getElementById("dropzone");
+      const inputFolder = document.getElementById("inputFolder");
+      const inputFiles = document.getElementById("inputFiles");
+
+      // Cargar plantilla genérica por defecto
+      clearFormData();
+      setTodayDateInAllFields();
+
+      // Botones de selección de carpeta
+      document.getElementById("btnSelectFolder").addEventListener("click", selectFolderModern);
+      document.getElementById("btnBrowseFolder").addEventListener("click", selectFolderModern);
+      document.getElementById("btnBrowseFiles").addEventListener("click", () => inputFiles.click());
+
+      // Botón Poner fecha actual (-f)
+      document.getElementById("btnSetTodayDate").addEventListener("click", () => {
+        setTodayDateInAllFields();
+      });
+
+      // Botón Limpiar formulario
+      document.getElementById("btnClearForm").addEventListener("click", () => {
+        if (confirm("¿Deseas reiniciar los campos a la plantilla vacía?")) {
+          clearFormData();
+          setTodayDateInAllFields();
+        }
+      });
+
+      // Input changes
+      inputFolder.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          const folderName = e.target.files[0].webkitRelativePath ? e.target.files[0].webkitRelativePath.split("/")[0] : "Carpeta seleccionada";
+          loadFromFilesList(e.target.files, folderName);
+        }
+      });
+
+      inputFiles.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          loadFromFilesList(e.target.files, "Archivos seleccionados");
+        }
+      });
+
+      // Drag & Drop en la zona
+      dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzone.classList.add("dragover");
+      });
+      dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+      dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("dragover");
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          loadFromFilesList(e.dataTransfer.files, "Archivos arrastrados");
+        }
+      });
+
+      // ------------------------------------------------ RUTAS DE VARIANTES OFICIALES
+      const LOGO_PATHS = {
+        dark: "Logo/1_logo_principal_fondo_oscuro.png",
+        light: "Logo/2_logo_completo_fondo_claro.png",
+        icon: "Logo/3_icono_fondo_oscuro.png",
+        faviconDark: "Logo/4_icono_app_32x32_oscuro.png",
+        faviconLight: "Logo/5_icono_app_32x32_claro.png"
+      };
+
+      function updateReportLogo() {
+        const logoEl = document.getElementById("mainReportLogo");
+        const tbImg = document.getElementById("toolbarLogoImg");
+        const favLink = document.querySelector('link[rel="icon"]');
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+
+        if (tbImg && !tbImg.src.includes("3_icono_fondo_oscuro.png")) {
+          tbImg.src = LOGO_PATHS.icon;
+        }
+        if (logoEl) {
+          logoEl.src = isDark ? LOGO_PATHS.dark : LOGO_PATHS.light;
+        }
+        if (favLink) {
+          favLink.href = isDark ? LOGO_PATHS.faviconDark : LOGO_PATHS.faviconLight;
+        }
+      }
+
+      // Botón Imprimir / PDF
+      document.getElementById("btnPrintPdf").addEventListener("click", () => {
+        const logoImg = document.getElementById("mainReportLogo");
+        if (logoImg) logoImg.src = LOGO_PATHS.light;
+        window.print();
+        setTimeout(updateReportLogo, 1000);
+      });
+
+      window.addEventListener("beforeprint", () => {
+        const logoImg = document.getElementById("mainReportLogo");
+        if (logoImg) logoImg.src = LOGO_PATHS.light;
+      });
+      window.addEventListener("afterprint", () => {
+        updateReportLogo();
+      });
+
+      // Botón Descargar HTML completo
+      document.getElementById("btnDownloadHtml").addEventListener("click", () => {
+        try {
+          const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+          const currentLogoUrl = isDark ? LOGO_PATHS.dark : LOGO_PATHS.light;
+          let reportHtmlContent = document.getElementById("reportContent").outerHTML;
+
+          const tit = document.getElementById("rep_titulo") ? document.getElementById("rep_titulo").innerText : "informe";
+          const reportHtml = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${tit} - NetSpector</title><link rel="icon" type="image/png" href="${LOGO_PATHS.faviconDark}"><style>${document.querySelector("style").innerHTML}</style></head><body><div class="report-wrapper">${reportHtmlContent}</div></body></html>`;
+          const blob = new Blob([reportHtml], { type: "text/html;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `informe_${normalizeStr(tit || "auditoria")}.html`;
+          a.click();
+          URL.revokeObjectURL(url);
+          showAppNotification("Informe HTML autónomo descargado con éxito.", "success");
+        } catch (err) {
+          console.error("Error al exportar HTML:", err);
+          showAppNotification("Error al exportar el archivo HTML: " + err.message, "error");
+        }
+      });
+
+      // Botón Exportar TXT actualizados
+      document.getElementById("btnExportTxt").addEventListener("click", () => {
+        try {
+          const genTxt = `# Datos generales actualizados
+titulo: ${document.getElementById("rep_titulo").innerText}
+codigo: ${document.getElementById("rep_codigo").innerText}
+fecha: ${document.getElementById("rep_fecha").innerText}
+auditor: ${document.getElementById("rep_auditor").innerText}
+solicitante: ${document.getElementById("rep_solicitante").innerText}
+version: ${document.getElementById("rep_version").innerText}
+confidencialidad: ${document.getElementById("rep_confidencialidad").innerText}
+activo: ${document.getElementById("rep_activo").innerText}
+fuera_de_alcance: ${document.getElementById("rep_fuera_de_alcance").innerText}
+tipo_de_analisis: ${document.getElementById("rep_tipo_de_analisis").innerText}
+autorizacion: ${document.getElementById("rep_autorizacion").innerText}
+host: ${document.getElementById("rep_host").innerText}
+ip_mac: ${document.getElementById("rep_ip_mac").innerText}
+so: ${document.getElementById("rep_so").innerText}
+kernel: ${document.getElementById("rep_kernel").innerText}
+tipo_de_equipo: ${document.getElementById("rep_tipo_de_equipo").innerText}
+funcion: ${document.getElementById("rep_funcion").innerText}
+propietario: ${document.getElementById("rep_propietario").innerText}
+ultimo_arranque: ${document.getElementById("rep_ultimo_arranque").innerText}
+resumen: ${document.getElementById("rep_resumen_texto").innerText}
+firma_auditor: ${document.getElementById("rep_firma_auditor_sig").innerText}
+`;
+          const blob = new Blob([genTxt], { type: "text/plain;charset=utf-8" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "general.txt";
+          a.click();
+          URL.revokeObjectURL(a.href);
+          showAppNotification("Archivo general.txt exportado correctamente.", "success");
+        } catch (err) {
+          console.error("Error al exportar TXT:", err);
+          showAppNotification("Error al exportar general.txt: " + err.message, "error");
+        }
+      });
+
+      // Gestión de Modo Oscuro persistente con LocalStorage
+      function applyTheme(theme) {
+        if (theme === "dark") {
+          document.documentElement.setAttribute("data-theme", "dark");
+          const lbl = document.getElementById("themeLabel");
+          if (lbl) lbl.innerText = "Modo Claro";
+        } else {
+          document.documentElement.removeAttribute("data-theme");
+          const lbl = document.getElementById("themeLabel");
+          if (lbl) lbl.innerText = "Modo Oscuro";
+        }
+        try { localStorage.setItem("netspector_theme", theme); } catch(e) {}
+        updateReportLogo();
+      }
+
+      const savedTheme = localStorage.getItem("netspector_theme") || 
+        (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      applyTheme(savedTheme);
+
+      document.getElementById("btnToggleTheme").addEventListener("click", () => {
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        applyTheme(isDark ? "light" : "dark");
+      });
+
+      // Eventos de Encuesta de Satisfacción
+      document.getElementById("btnSurveyYes").addEventListener("click", () => {
+        document.getElementById("surveyButtons").style.display = "none";
+        document.getElementById("surveyFeedbackYes").style.display = "block";
+      });
+
+      document.getElementById("btnSurveyNo").addEventListener("click", () => {
+        document.getElementById("surveyButtons").style.display = "none";
+        document.getElementById("surveyFeedbackNo").style.display = "block";
+      });
+    });
+  </script>
+</body>
+</html>

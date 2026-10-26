@@ -1,0 +1,2 @@
+# NetSpector no requiere dependencias externas de terceros.
+# Utiliza exclusivamente la biblioteca estándar de Python 3 (Python >= 3.7 recomendado).
