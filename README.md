@@ -5,12 +5,12 @@
 <h1 align="center"> NetSpector - Suite de Auditoría de Seguridad Técnica</h1>
 
 <p align="center">
-  <a href="https://github.com/tokaiteio1993-1988/NetSpector/releases"><img src="https://img.shields.io/badge/version-2.2.0-blue?style=flat-square" alt="Versión"></a>
+  <a href="https://github.com/tokaiteio1993-1988/NetSpector/releases"><img src="https://img.shields.io/badge/version-2.3.0-blue?style=flat-square" alt="Versión"></a>
   <a href="https://github.com/tokaiteio1993-1988/NetSpector/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="Licencia"></a>
   <a href="NetSpector.html"><img src="https://img.shields.io/badge/App_Web-Sin_Python-success?style=flat-square&logo=html5" alt="Web App"></a>
 </p>
   
-> **Generador y editor interactivo de informes de auditoría de seguridad conforme a la plantilla oficial de 10 secciones.**  
+> **Generador y editor interactivo de informes de auditoría de seguridad (Equipo Único e Infraestructura de Red) conforme a la plantilla oficial de 10 secciones.**  
 > Funciona tanto en **Navegador Web directo (sin necesidad de tener Python instalado)** como mediante **Script de Python**.
 
 ---
@@ -21,12 +21,13 @@ Si estás en Windows y no tienes Python instalado:
 
 1. **Abre directamente [`NetSpector.html`](NetSpector.html)** con Google Chrome, Microsoft Edge, Brave o Firefox.
 2. Pulsa en **"Seleccionar Carpeta"** (o arrastra y suelta tu carpeta / archivos `.txt` en la pantalla).
-3. **Mete en esa carpeta todos los `.txt` de resultados** que saques de la máquina o infraestructura (`nmap.txt`, `ss.txt`, `hostname.txt`, permisos, etc.).
-4. NetSpector leerá los archivos automáticamente, cruzará los puertos y procesos, rellenará las 10 secciones del informe oficial y te mostrará el informe completo en pantalla.
-5. **Modo Oscuro:** Dispone de un botón en la barra superior ("Modo Oscuro" / "Modo Claro") que guarda tu preferencia automáticamente.
-6. Puedes **hacer clic en cualquier celda para editar el texto** en vivo si necesitas ajustar algo.
-7. Pulsa **"Exportar a PDF"** para imprimirlo o guardarlo como documento PDF formal, o **"Guardar HTML"** para tener el informe interactivo autocontenido.
-8. **Encuesta integrada:** Al final del documento dispones de una encuesta rápida de satisfacción.
+3. **Mete en esa carpeta todos los `.txt` de resultados** que saques del equipo o de la infraestructura (`netdiscover.txt`, `nmap_red.txt`, `nmap_192.168.1.10.txt`, `ss.txt`, `hostname.txt`, permisos, etc.).
+4. NetSpector leerá los archivos automáticamente, detectará si se trata de un equipo individual o de una infraestructura completa, generará la **Topografía de Red**, cruzará los puertos y procesos por host y rellenará las 10 secciones del informe oficial.
+5. **Modo Equipo / Modo Infraestructura:** Se activa automáticamente al detectar ficheros `netdiscover` o múltiples equipos en `nmap`, y también puedes alternarlo manualmente en cualquier momento desde el botón **"Modo: Equipo / Modo: Infraestructura"** de la barra superior.
+6. **Modo Oscuro:** Dispone de un botón en la barra superior ("Modo Oscuro" / "Modo Claro") que guarda tu preferencia automáticamente.
+7. Puedes **hacer clic en cualquier celda para editar el texto** en vivo si necesitas ajustar algo.
+8. Pulsa **"Exportar a PDF"** para imprimirlo o guardarlo como documento PDF formal, o **"Guardar HTML"** para tener el informe interactivo autocontenido.
+9. **Encuesta integrada:** Al final del documento dispones de una encuesta rápida de satisfacción.
 
 ---
 
@@ -35,7 +36,7 @@ Si estás en Windows y no tienes Python instalado:
 Puedes ejecutar el script con los parámetros que necesites:
 
 ```bash
-python netspector.py -d ./carpeta_auditoria -e informe_final.html -a "Nombre del Auditor" -f -n "Auditoría de Servidores" -c "AUD-2026-01"
+python netspector.py -d ./carpeta_auditoria -e informe_final.html -a "Nombre del Auditor" -f -n "Auditoría de Infraestructura" -c "AUD-2026-01" -m infra
 ```
 
 ### Parámetros soportados:
@@ -48,7 +49,9 @@ python netspector.py -d ./carpeta_auditoria -e informe_final.html -a "Nombre del
 | `-f [fecha]` | **Fecha automática:** pone automáticamente la fecha actual (o la indicada) en todos los campos de fecha del informe. |
 | `-n <nombre>` | **Nombre de la auditoría** (se coloca en el título del informe y encabezado). |
 | `-c <código>` *(o `-i`, `--num`)* | **Número de informe:** si introduces un código personalizado, se usa ese; si no se indica, se genera automáticamente como `AUD-YYYY-MM-DD-0` (incrementando el secuencial `-1`, `-2`... si se generan varios el mismo día). |
-| `-v, --verbose` | **Modo detallado (verbose):** muestra en consola paso a paso el análisis de archivos, sockets y puertos detectados. |
+| `-m <modo>` | **Modo del informe:** `auto` (por defecto, detecta si hay varios hosts o netdiscover), `equipo` (vista individual) o `infra` (modo infraestructura con topografía de red). |
+| `--infra, -infra` | **Fuerza el Modo Infraestructura de Red** directamente desde consola. |
+| `-v, --verbose` | **Modo detallado (verbose):** muestra en consola paso a paso el análisis de archivos, equipos, sockets y puertos detectados. |
 | `--version` | **Muestra la versión instalada** de NetSpector. |
 | `-update, --update` | **Actualiza NetSpector** automáticamente a la última versión disponible desde GitHub. |
 
@@ -62,8 +65,12 @@ El formato generado reproduce fielmente el modelo oficial de auditoría técnica
 
 1. **Datos generales del informe**: Título, código/referencia, fecha, auditor, solicitante, versión/estado y confidencialidad.
 2. **Alcance y autorización**: Activo evaluado, fuera de alcance, tipo de análisis (caja blanca/negra/gris) y autorización.
-3. **Identificación del equipo**: Hostname, IP / MAC, sistema operativo y versión, versión del kernel, tipo de equipo, función/criticidad, propietario y último arranque.
-4. **Inventario de servicios y puertos**: Cruce inteligente de puertos abiertos, servicio, versión, proceso/usuario (`sshd/root`, etc.), accesibilidad (`Solo localhost` vs `Red local`), necesidad y observaciones.
+3. **Identificación del equipo / infraestructura**:
+   - Datos identificativos del sistema o del segmento de red auditado.
+   - **3.1 Topografía de la infraestructura (Mapa de Red):** Diagrama vectorial SVG interactivo e imprimible con el bus de red, segmento/subred y tarjetas técnicas de cada equipo activo (rol deducido, IP, hostname/fabricante, MAC, SO y puertos), con agrupación automática de rangos Proxy ARP / Multi-IP.
+   - **3.2 Inventario de equipos descubiertos:** Tabla consolidada unificando los hallazgos de `netdiscover` y `nmap` (IP, MAC, Fabricante/Vendor, Hostname, Sistema Operativo, Rol inferido, resumen de puertos abiertos y observaciones por activo).
+   - **3.3 Observaciones de la infraestructura y anomalías de red:** Bloque técnico editable para documentar anomalías de capa 2 (Proxy ARP, Client Isolation, respuestas ambiguas de portales cautivos o cortafuegos intermedios), pre-rellenado automáticamente cuando se detectan en los escaneos.
+4. **Inventario de servicios y puertos**: Cruce inteligente de puertos abiertos, equipo/IP al que pertenece cada puerto (en modo infraestructura), servicio, versión, proceso/usuario (`sshd/root`, etc.), accesibilidad (`Solo localhost` vs `Red local`), necesidad y observaciones.
 5. **Revisión de configuración**:
    - `5.1 Cuentas y autenticación` (acceso root SSH, caducidad de contraseñas, shadow, sudoers, MFA en PAM).
    - `5.2 Red y cortafuegos` (política UFW/iptables, servicios en escucha, reenvío IPv4/IPv6).
@@ -76,23 +83,25 @@ El formato generado reproduce fielmente el modelo oficial de auditoría técnica
    - Tabla resumen de vulnerabilidades con prioridad de corrección.
 7. **Resumen ejecutivo y valoración global**: Matriz de severidades (Crítica, Alta, Media, Baja, Informativa) y resumen narrativo.
 8. **Plan de remediación y recomendaciones**: Tabla priorizada con acción recomendada, mitigación temporal, responsable, fecha límite, esfuerzo y estado.
-9. **Metodología y herramientas utilizadas**: Herramientas, versiones, uso, comandos ejecutados y marcas de tiempo.
+9. **Metodología y herramientas utilizadas**: Herramientas, versiones, uso, comandos ejecutados y marcas de tiempo (autocompletadas si se detectan salidas de `netdiscover`, `nmap` o `ss`).
 10. **Anexos, evidencias y firmas**: Índice de anexos, visores colapsables con la salida íntegra de cada comando/fichero, control de versiones y bloque de firmas formales.
 
 ---
 
 ## 4. Archivos que puedes meter en tu carpeta de trabajo
 
-Simplemente guarda en tu carpeta las salidas de los comandos que ejecutes en la máquina. NetSpector detecta automáticamente el contenido de los archivos:
+Simplemente guarda en tu carpeta las salidas de los comandos que ejecutes en la máquina o red. NetSpector detecta automáticamente el contenido de todos los archivos de la carpeta:
 
 | Archivo o contenido | Comando / Origen habitual | Qué se extrae automáticamente |
 |---|---|---|
-| `nmap*.txt` | `nmap -sV -O -p- <IP>` | Puertos, servicios, versiones, SO detectado, IP y MAC |
+| `netdiscover*.txt` | `netdiscover -r 192.168.1.0/24 -P > netdiscover.txt` | Equipos activos en capa 2 (ARP), direcciones IP, direcciones MAC, fabricante (Vendor) y rango de red |
+| `nmap_red*.txt` | `nmap -sn 192.168.1.0/24` o `nmap -sV 192.168.1.0/24` | Múltiples hosts activos de toda la subred, hostnames, MACs, sistemas operativos y puertos abiertos |
+| `nmap_<equipo>*.txt` | `nmap -sV -O -p- <IP>` (uno por máquina) | Puertos, servicios, versiones detalladas y SO de cada equipo concreto (se fusiona por IP con el resto de escaneos) |
 | `ss*.txt` / `netstat*.txt` | `ss -tulpn` o `netstat -tulpn` | Procesos, usuarios (`root`, `www-data`), puertos locales vs red |
 | `hostname.txt` / `uname.txt` | `hostname`, `uname -a`, `/etc/issue` | Nombre de host, kernel y distribución Linux |
 | `ficheros_escritura.txt` | `find / -xdev -type f -perm -0002` | Lista de ficheros con permisos de escritura global |
 | `login_defs.txt` | `cat /etc/login.defs` | Directivas `PASS_MAX_DAYS`, `PASS_MIN_DAYS`, `PASS_WARN_AGE` |
-| `general.txt` *(opcional)* | Notas del auditor | Sobrescribe datos generales, alcance o firmas |
+| `general.txt` *(opcional)* | Notas del auditor | Sobrescribe datos generales, alcance, modo (`modo: infra`) o firmas |
 | `hallazgos.txt` *(opcional)* | Vulnerabilidades específicas | Define o añade fichas personalizadas con campos CVE y remediación |
 | `controles.txt` *(opcional)* | Listado de verificaciones | Modifica o añade verificaciones específicas para la sección 5 |
 | `*.txt` / `*.log` / `*.out` | Cualquier otro resultado de auditoría | Se adjunta automáticamente al **Índice de Anexos y Evidencias** |

@@ -532,6 +532,61 @@
     .notif-error { background: #b91c1c; color: #fff; border: 1px solid #ef4444; }
     .notif-info { background: #1e3a8a; color: #fff; border: 1px solid #3b82f6; }
 
+    /* TOPOGRAFÍA DE RED Y MODO INFRAESTRUCTURA */
+    .topo-box {
+      margin: 14px 0 22px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      background: var(--bg-page);
+    }
+    .topo-kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .topo-kpi {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+    }
+    .topo-kpi-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    .topo-kpi-val {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 2px;
+    }
+    [data-theme="dark"] .topo-kpi-val {
+      color: var(--text-main);
+    }
+    .topo-svg-container {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 6px;
+    }
+    .svg-bg { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1; }
+    .svg-card { fill: #ffffff; }
+    .svg-line { stroke: #64748b; }
+    .svg-text-main { fill: #0f172a; }
+    .svg-text-muted { fill: #475569; }
+    [data-theme="dark"] .svg-bg { fill: #0f172a; stroke: #334155; }
+    [data-theme="dark"] .svg-card { fill: #1e293b; }
+    [data-theme="dark"] .svg-line { stroke: #64748b; }
+    [data-theme="dark"] .svg-text-main { fill: #f1f5f9; }
+    [data-theme="dark"] .svg-text-muted { fill: #94a3b8; }
+
     /* ESTILOS PARA IMPRESIÓN Y EXPORTACIÓN A PDF EXACTA */
     @media print {
       body {
@@ -598,9 +653,15 @@
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
-      .vuln-card {
+      .vuln-card, .topo-box {
         page-break-inside: avoid;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
+      .svg-bg { fill: #f8fafc !important; stroke: #cbd5e1 !important; }
+      .svg-card { fill: #ffffff !important; }
+      .svg-text-main { fill: #0f172a !important; }
+      .svg-text-muted { fill: #475569 !important; }
       details.anexo-details {
         border-color: #ccc !important;
       }
@@ -622,6 +683,9 @@
     <div class="toolbar-actions">
       <button class="btn btn-primary" id="btnSelectFolder" title="Seleccionar la carpeta donde tienes tus txt">
         Seleccionar Carpeta
+      </button>
+      <button class="btn btn-outline" id="btnToggleMode" title="Cambiar entre Modo Equipo Único y Modo Infraestructura de Red (Netdiscover + múltiples Nmap)">
+        <span id="modeLabel">Modo: Equipo</span>
       </button>
       <button class="btn" id="btnSetTodayDate" title="Poner la fecha actual en todos los campos de fecha">
         Fecha de Hoy
@@ -651,7 +715,7 @@
   <section class="dropzone-container no-print">
     <div class="dropzone" id="dropzone">
       <h2>Selecciona o arrastra aquí tu carpeta de trabajo</h2>
-      <p>Mete en la carpeta tus resultados (<code>nmap.txt</code>, <code>ss.txt</code>, notas, comandos ejecutados...) y NetSpector rellenará automáticamente todos los campos del informe oficial.</p>
+      <p>Mete en la carpeta tus resultados (<code>netdiscover.txt</code>, <code>nmap.txt</code> de red o por equipos, <code>ss.txt</code>, notas...) y NetSpector rellenará automáticamente el informe y la topografía de red.</p>
       <div class="dropzone-buttons">
         <button class="btn btn-primary" id="btnBrowseFolder">Elegir Carpeta del Equipo</button>
         <button class="btn" id="btnBrowseFiles">Elegir Archivos TXT Sueltos</button>
@@ -683,7 +747,7 @@
         <div class="report-header-flex">
           <div class="report-header-text">
             <h1 contenteditable="true" id="rep_titulo_principal">Informe de auditoría de seguridad de un equipo</h1>
-            <p class="subtitle" contenteditable="true">Servicios, configuración y vulnerabilidades — Plantilla con guía de cumplimentación · Versión 1.0</p>
+            <p class="subtitle" contenteditable="true" id="rep_subtitulo_principal">Servicios, configuración y vulnerabilidades — Plantilla con guía de cumplimentación · Versión 1.0</p>
           </div>
           <div class="report-header-brand">
             <img src="Logo/1_logo_principal_fondo_oscuro.png" alt="NetSpector Logo" class="brand-report-logo" id="mainReportLogo">
@@ -738,9 +802,9 @@
         </div>
       </section>
 
-      <!-- 3. IDENTIFICACIÓN DEL EQUIPO -->
+      <!-- 3. IDENTIFICACIÓN DEL EQUIPO / INFRAESTRUCTURA -->
       <section class="section" id="sec-3">
-        <div class="section-title">3. Identificación del equipo</div>
+        <div class="section-title" id="sec3_title">3. Identificación del equipo</div>
         <div class="table-container">
           <table class="pdf-table">
             <thead>
@@ -750,8 +814,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td class="campo-key">Nombre de host</td><td class="campo-val" contenteditable="true" id="rep_host">No verificado</td></tr>
-              <tr><td class="campo-key">Direccion IP / MAC</td><td class="campo-val" contenteditable="true" id="rep_ip_mac">No verificado</td></tr>
+              <tr><td class="campo-key" id="lbl_sec3_host">Nombre de host</td><td class="campo-val" contenteditable="true" id="rep_host">No verificado</td></tr>
+              <tr><td class="campo-key" id="lbl_sec3_ip">Direccion IP / MAC</td><td class="campo-val" contenteditable="true" id="rep_ip_mac">No verificado</td></tr>
               <tr><td class="campo-key">Sistema operativo y versión</td><td class="campo-val" contenteditable="true" id="rep_so">No verificado</td></tr>
               <tr><td class="campo-key">Versión del kernel</td><td class="campo-val" contenteditable="true" id="rep_kernel">No verificado</td></tr>
               <tr><td class="campo-key">Tipo de equipo</td><td class="campo-val" contenteditable="true" id="rep_tipo_de_equipo">Servidor</td></tr>
@@ -761,15 +825,50 @@
             </tbody>
           </table>
         </div>
+
+        <div id="infra_section_block" style="display: none;">
+          <div class="subsection-title" style="margin-top:24px;">3.1 Topografía de la infraestructura (Mapa de Red)</div>
+          <div id="topo_container"></div>
+
+          <div class="subsection-title" style="margin-top:22px;">3.2 Inventario de equipos descubiertos (Netdiscover / Nmap)</div>
+          <div class="table-container">
+            <table class="pdf-table" id="tabla_equipos_infra">
+              <thead>
+                <tr>
+                  <th>Dirección IP</th>
+                  <th>Dirección MAC</th>
+                  <th>Fabricante (Vendor)</th>
+                  <th>Hostname</th>
+                  <th>Sistema Operativo</th>
+                  <th>Rol inferido</th>
+                  <th>Puertos abiertos</th>
+                  <th>Observaciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody_equipos_infra">
+                <tr><td colspan="8" style="text-align:center; color:var(--text-muted);">Carga salidas de netdiscover o escaneos nmap para poblar los equipos de la red.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="subsection-title" style="margin-top:22px;">3.3 Observaciones de la infraestructura y anomalías de red</div>
+          <div class="topo-box" style="border-left: 4px solid var(--warn); background: var(--bg-card);">
+            <div style="font-size:12px; font-weight:700; color:var(--warn); text-transform:uppercase; margin-bottom:6px;">
+              Notas técnicas del auditor sobre la topología, direccionamiento y respuestas ARP/ICMP (haz clic para editar)
+            </div>
+            <div id="rep_observaciones_red" contenteditable="true" style="font-size:13px; line-height:1.6; white-space:pre-wrap; min-height:42px; outline:none;">Sin anomalías de capa de enlace (Proxy ARP / duplicidad MAC) detectadas. Haz clic aquí para añadir tus observaciones sobre la red o anomalías de direccionamiento.</div>
+          </div>
+        </div>
       </section>
 
       <!-- 4. INVENTARIO DE SERVICIOS Y PUERTOS -->
       <section class="section" id="sec-4">
-        <div class="section-title">4. Inventario de servicios y puertos</div>
+        <div class="section-title" id="sec4_title">4. Inventario de servicios y puertos</div>
         <div class="table-container">
           <table class="pdf-table" id="tabla_inventario">
             <thead>
               <tr>
+                <th id="th_equipo_ip" style="display: none;">Equipo / IP</th>
                 <th>Puerto / protocolo</th>
                 <th>Servicio</th>
                 <th>Software y versión</th>
@@ -789,65 +888,66 @@
       <!-- 5. REVISIÓN DE CONFIGURACIÓN -->
       <section class="section" id="sec-5">
         <div class="section-title">5. Revisión de configuración</div>
+        <div id="container_controles_sec5">
+          <div class="subsection-title">5.1 Cuentas y autenticación</div>
+          <div class="table-container">
+            <table class="pdf-table">
+              <thead>
+                <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+              </thead>
+              <tbody id="tbody_cfg_5_1"></tbody>
+            </table>
+          </div>
 
-        <div class="subsection-title">5.1 Cuentas y autenticación</div>
-        <div class="table-container">
-          <table class="pdf-table">
-            <thead>
-              <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
-            </thead>
-            <tbody id="tbody_cfg_5_1"></tbody>
-          </table>
-        </div>
+          <div class="subsection-title">5.2 Red y cortafuegos</div>
+          <div class="table-container">
+            <table class="pdf-table">
+              <thead>
+                <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+              </thead>
+              <tbody id="tbody_cfg_5_2"></tbody>
+            </table>
+          </div>
 
-        <div class="subsection-title">5.2 Red y cortafuegos</div>
-        <div class="table-container">
-          <table class="pdf-table">
-            <thead>
-              <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
-            </thead>
-            <tbody id="tbody_cfg_5_2"></tbody>
-          </table>
-        </div>
+          <div class="subsection-title">5.3 Sistema de archivos y permisos</div>
+          <div class="table-container">
+            <table class="pdf-table">
+              <thead>
+                <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+              </thead>
+              <tbody id="tbody_cfg_5_3"></tbody>
+            </table>
+          </div>
 
-        <div class="subsection-title">5.3 Sistema de archivos y permisos</div>
-        <div class="table-container">
-          <table class="pdf-table">
-            <thead>
-              <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
-            </thead>
-            <tbody id="tbody_cfg_5_3"></tbody>
-          </table>
-        </div>
+          <div class="subsection-title">5.4 Actualizaciones y parches</div>
+          <div class="table-container">
+            <table class="pdf-table">
+              <thead>
+                <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+              </thead>
+              <tbody id="tbody_cfg_5_4"></tbody>
+            </table>
+          </div>
 
-        <div class="subsection-title">5.4 Actualizaciones y parches</div>
-        <div class="table-container">
-          <table class="pdf-table">
-            <thead>
-              <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
-            </thead>
-            <tbody id="tbody_cfg_5_4"></tbody>
-          </table>
-        </div>
+          <div class="subsection-title">5.5 Registro, auditoría y copias de seguridad</div>
+          <div class="table-container">
+            <table class="pdf-table">
+              <thead>
+                <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+              </thead>
+              <tbody id="tbody_cfg_5_5"></tbody>
+            </table>
+          </div>
 
-        <div class="subsection-title">5.5 Registro, auditoría y copias de seguridad</div>
-        <div class="table-container">
-          <table class="pdf-table">
-            <thead>
-              <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
-            </thead>
-            <tbody id="tbody_cfg_5_5"></tbody>
-          </table>
-        </div>
-
-        <div class="subsection-title">5.6 Servicios concretos (ejemplo: servidor web)</div>
-        <div class="table-container">
-          <table class="pdf-table">
-            <thead>
-              <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
-            </thead>
-            <tbody id="tbody_cfg_5_6"></tbody>
-          </table>
+          <div class="subsection-title">5.6 Servicios concretos (ejemplo: servidor web)</div>
+          <div class="table-container">
+            <table class="pdf-table">
+              <thead>
+                <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+              </thead>
+              <tbody id="tbody_cfg_5_6"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -1044,8 +1144,13 @@
     // ESTADO GLOBAL DE LA APLICACIÓN
     const AppState = {
       files: new Map(),
+      modo: "equipo",
+      modoManual: null,
       general: {},
       inventario: [],
+      inventarioInfra: [],
+      equipos: [],
+      resumenRed: { rango: "Segmento local", subredes: [], totalEquipos: 0, equiposConPuertos: 0, totalPuertos: 0 },
       controles: [],
       hallazgos: [],
       herramientas: [],
@@ -1164,11 +1269,59 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
       return sections;
     }
 
+    function cleanAnsi(text) {
+      if (!text) return "";
+      return String(text).replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, "");
+    }
+
+    function isNetdiscoverFile(fileName, content) {
+      const lower = (fileName || "").toLowerCase();
+      if (lower.includes("netdiscover") || lower.includes("arp-scan")) return true;
+      const clean = cleanAnsi(content);
+      if (clean.includes("Currently scanning:") || clean.includes("Captured ARP Req/Rep packets")) return true;
+      if (/IP\s+At\s+MAC\s+Address\s+Count\s+Len\s+MAC\s+Vendor/i.test(clean)) return true;
+      const matches = clean.match(/^\s*\d{1,3}(?:\.\d{1,3}){3}\s+[0-9a-fA-F]{2}(?:[:-][0-9a-fA-F]{2}){5}\s+\d+\s+\d+\s+.+$/gm);
+      return !!(matches && matches.length >= 1);
+    }
+
+    function parseNetdiscover(content) {
+      const clean = cleanAnsi(content);
+      const hosts = {};
+      let rango = "";
+
+      const mScan = clean.match(/Currently scanning:\s*([^\s\r\n(]+)/i);
+      if (mScan && mScan[1].toLowerCase() !== "finished!") {
+        rango = mScan[1].trim();
+      }
+
+      const lines = clean.split(/\r?\n/);
+      for (let rawLine of lines) {
+        const l = rawLine.trim();
+        if (!l) continue;
+        const m = l.match(/^(\d{1,3}(?:\.\d{1,3}){3})\s+([0-9a-fA-F]{2}(?:[:-][0-9a-fA-F]{2}){5})\s+(\d+)\s+(\d+)\s*(.*)$/);
+        if (m) {
+          const ip = m[1];
+          const mac = m[2].toUpperCase().replace(/-/g, ":");
+          const vendor = (m[5] || "").trim() || "Fabricante desconocido";
+          hosts[ip] = { ip, mac, vendor };
+          continue;
+        }
+        const mAlt = l.match(/^(\d{1,3}(?:\.\d{1,3}){3})\s+([0-9a-fA-F]{2}(?:[:-][0-9a-fA-F]{2}){5})\s+([^\d].*)$/);
+        if (mAlt) {
+          const ip = mAlt[1];
+          const mac = mAlt[2].toUpperCase().replace(/-/g, ":");
+          const vendor = (mAlt[3] || "").trim() || "Fabricante desconocido";
+          if (!hosts[ip]) hosts[ip] = { ip, mac, vendor };
+        }
+      }
+      return { rango, hosts };
+    }
+
     function parseNmap(content) {
       const ports = {};
       const lines = content.split(/\r?\n/);
       for (let line of lines) {
-        const m = line.match(/^(\d+)\/(tcp|udp)\s+(open\S*)\s+(\S+)\s*(.*)$/);
+        const m = line.trim().match(/^(\d+)\/(tcp|udp)\s+(open\S*)\s+(\S+)\s*(.*)$/);
         if (m) {
           const portNum = parseInt(m[1], 10);
           const proto = m[2].toLowerCase();
@@ -1178,6 +1331,522 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
         }
       }
       return ports;
+    }
+
+    function parseNmapMulti(content, fileName = "") {
+      const hosts = {};
+      const blocks = content.split(/(?=^Nmap scan report for )/m);
+
+      for (let bloque of blocks) {
+        const trimmed = bloque.trim();
+        if (!trimmed.startsWith("Nmap scan report for ")) continue;
+        const firstLine = trimmed.split(/\r?\n/)[0];
+        if (firstLine.toLowerCase().includes("[host down]")) continue;
+
+        const mHdr = firstLine.match(/^Nmap scan report for (?:([^\s()]+)\s+\(([\d.]+)\)|([\d.]+)|([^\s()]+))/);
+        if (!mHdr) continue;
+
+        const hostname = mHdr[1] || mHdr[4] || "";
+        const ip = mHdr[2] || mHdr[3] || "";
+        const key = ip || hostname;
+        if (!key) continue;
+
+        if (!hosts[key]) {
+          hosts[key] = {
+            ip: ip || hostname,
+            host: hostname,
+            mac: "",
+            vendor: "",
+            so: "",
+            ports: {}
+          };
+        }
+        const h = hosts[key];
+        if (hostname && !h.host) h.host = hostname;
+        if (ip && h.ip === h.host) h.ip = ip;
+
+        const mMac = bloque.match(/MAC Address:\s*([0-9A-Fa-f:]{17})(?:\s*\(([^)]+)\))?/);
+        if (mMac) {
+          h.mac = mMac[1].toUpperCase();
+          if (mMac[2]) h.vendor = mMac[2].trim();
+        }
+
+        const mOs = bloque.match(/(?:OS details|Running|Service Info: OS):\s*([^\r\n;]+)/);
+        if (mOs) {
+          h.so = mOs[1].trim();
+        } else {
+          const mOsGuess = bloque.match(/(?:Running \(JUST GUESSING\)|Aggressive OS guesses):\s*([^\r\n;]+)/);
+          if (mOsGuess) {
+            const firstGuess = mOsGuess[1].split(",")[0].trim();
+            h.so = `${firstGuess} (estimado por Nmap)`;
+          }
+        }
+
+        Object.assign(h.ports, parseNmap(bloque));
+      }
+
+      // Soporte formato Grepable (-oG)
+      if (Object.keys(hosts).length === 0 && content.includes("Host:")) {
+        const lines = content.split(/\r?\n/);
+        for (let line of lines) {
+          const mG = line.trim().match(/^Host:\s+(\d{1,3}(?:\.\d{1,3}){3})\s+\(([^)]*)\)/);
+          if (mG && !line.includes("Status: Down")) {
+            const ip = mG[1];
+            const hname = mG[2].trim();
+            if (!hosts[ip]) {
+              hosts[ip] = { ip, host: hname, mac: "", vendor: "", so: "", ports: {} };
+            }
+            const mP = line.match(/Ports:\s*(.+?)(?:\t|$)/);
+            if (mP) {
+              for (let itemP of mP[1].split(",")) {
+                const campos = itemP.split("/").map(c => c.trim());
+                if (campos.length >= 5 && campos[1].startsWith("open")) {
+                  const pNum = parseInt(campos[0], 10);
+                  const proto = (campos[2] || "tcp").toLowerCase();
+                  const srv = campos[4] || ND;
+                  const ver = campos[6] || "";
+                  if (!isNaN(pNum)) {
+                    hosts[ip].ports[`${pNum}/${proto}`] = { puerto: pNum, proto, servicio: srv, version: ver };
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Fallback si el archivo Nmap no tenía cabecera "Nmap scan report for"
+      if (Object.keys(hosts).length === 0) {
+        const fbPorts = parseNmap(content);
+        if (Object.keys(fbPorts).length > 0) {
+          const mIpFile = (fileName || "").match(/(\d{1,3}(?:\.\d{1,3}){3})/);
+          const baseName = (fileName || "Host").replace(/\.[^.]+$/, "");
+          const ipInferida = mIpFile ? mIpFile[1] : baseName;
+          hosts[ipInferida] = {
+            ip: ipInferida,
+            host: baseName,
+            mac: "",
+            vendor: "",
+            so: "",
+            ports: fbPorts
+          };
+        }
+      }
+
+      return hosts;
+    }
+
+    function ipSortCompare(a, b) {
+      const ma = String(a || "").trim().match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+      const mb = String(b || "").trim().match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+      if (ma && mb) {
+        for (let i = 1; i <= 4; i++) {
+          const diff = parseInt(ma[i], 10) - parseInt(mb[i], 10);
+          if (diff !== 0) return diff;
+        }
+        return 0;
+      }
+      if (ma) return -1;
+      if (mb) return 1;
+      return String(a || "").localeCompare(String(b || ""));
+    }
+
+    function inferHostRole(h) {
+      const ip = h.ip || "";
+      const portNums = new Set(Object.values(h.ports || {}).map(p => p.puerto));
+      const vendor = (h.vendor || "").toLowerCase();
+      const so = (h.so || "").toLowerCase();
+      const host = (h.host || "").toLowerCase();
+
+      if (["aruba", "ruckus", "unifi", "ubiquiti", "cambium", "aerohive"].some(w => vendor.includes(w))) {
+        return { nombre: "Controlador Wi-Fi / Punto de Acceso", tipo: "gateway" };
+      }
+      if (ip.endsWith(".1") || ip.endsWith(".254") || ["cisco", "mikrotik", "ubiquiti", "fortinet", "tp-link", "netgear", "juniper", "huawei"].some(w => vendor.includes(w)) || host.includes("router") || host.includes("gw") || host.includes("gateway")) {
+        return { nombre: "Gateway / Router", tipo: "gateway" };
+      }
+      if (portNums.has(88) || portNums.has(389) || portNums.has(636) || portNums.has(3268) || (portNums.has(53) && portNums.has(445))) {
+        return { nombre: "Controlador de Dominio", tipo: "dc" };
+      }
+      if (portNums.has(3306) || portNums.has(5432) || portNums.has(1433) || portNums.has(1521) || portNums.has(27017) || portNums.has(6379)) {
+        return { nombre: "Servidor de Base de Datos", tipo: "db" };
+      }
+      if (portNums.has(80) || portNums.has(443) || portNums.has(8080) || portNums.has(8443) || portNums.has(8000)) {
+        return { nombre: "Servidor Web / Aplicación", tipo: "web" };
+      }
+      if (portNums.has(445) || portNums.has(139) || portNums.has(2049) || portNums.has(21)) {
+        return { nombre: "Servidor de Archivos", tipo: "files" };
+      }
+      if (portNums.has(22) || portNums.has(3389) || portNums.has(5900) || portNums.has(5985)) {
+        return { nombre: "Servidor / Host Administrable", tipo: "server" };
+      }
+      if (so.includes("windows") || so.includes("linux") || portNums.size > 0) {
+        return { nombre: "Servidor / Activo con Servicios", tipo: "server" };
+      }
+      return { nombre: "Equipo / Host Activo", tipo: "host" };
+    }
+
+    function consolidateInfrastructure(netdiscovers, nmapsHosts, sss, extraServicios) {
+      const merged = {};
+      const rangos = [];
+
+      for (let ndData of netdiscovers) {
+        if (ndData.rango && !rangos.includes(ndData.rango)) rangos.push(ndData.rango);
+        for (let [ip, info] of Object.entries(ndData.hosts || {})) {
+          if (!merged[ip]) {
+            merged[ip] = { ip, host: "", mac: "", vendor: "", so: "", ports: {}, origen: new Set() };
+          }
+          if (info.mac && !merged[ip].mac) merged[ip].mac = info.mac;
+          if (info.vendor && !merged[ip].vendor) merged[ip].vendor = info.vendor;
+          merged[ip].origen.add("Netdiscover");
+        }
+      }
+
+      for (let [ipKey, info] of Object.entries(nmapsHosts)) {
+        if (!merged[ipKey]) {
+          merged[ipKey] = { ip: info.ip || ipKey, host: "", mac: "", vendor: "", so: "", ports: {}, origen: new Set() };
+        }
+        const h = merged[ipKey];
+        if (info.host && !h.host) h.host = info.host;
+        if (info.mac && !h.mac) h.mac = info.mac;
+        if (info.vendor && !h.vendor) h.vendor = info.vendor;
+        if (info.so && !h.so) h.so = info.so;
+        if (info.ports) Object.assign(h.ports, info.ports);
+        h.origen.add("Nmap");
+      }
+
+      const sortedKeys = Object.keys(merged).sort(ipSortCompare);
+      const macToIps = {};
+      for (let ipKey of sortedKeys) {
+        const mAddr = (merged[ipKey].mac || "").trim().toUpperCase();
+        if (mAddr && mAddr !== ND) {
+          if (!macToIps[mAddr]) macToIps[mAddr] = [];
+          macToIps[mAddr].push(ipKey);
+        }
+      }
+
+      const macsProxyArp = {};
+      for (let [mAddr, ipList] of Object.entries(macToIps)) {
+        if (ipList.length >= 4) macsProxyArp[mAddr] = ipList;
+      }
+
+      const skipIps = new Set();
+      const proxyRangosNodos = [];
+      const observacionesAuto = [];
+
+      for (let [mAddr, ipList] of Object.entries(macsProxyArp)) {
+        const vendorSample = merged[ipList[0]].vendor || "Fabricante desconocido";
+        const conPuertos = ipList.filter(ip => Object.keys(merged[ip].ports || {}).length > 0);
+        let principales = [];
+        if (conPuertos.length > 0) {
+          principales = [...conPuertos];
+        } else {
+          const gwCand = ipList.filter(ip => ip.endsWith(".254") || ip.endsWith(".1"));
+          principales = gwCand.length > 0 ? [gwCand[gwCand.length - 1]] : [ipList[0]];
+        }
+
+        const clones = ipList.filter(ip => !principales.includes(ip));
+        for (let ipC of clones) skipIps.add(ipC);
+
+        if (clones.length > 0) {
+          const ipIni = clones[0];
+          const ipFin = clones[clones.length - 1];
+          const incluyeRedBcast = ipList.some(ip => ip.endsWith(".0")) || ipList.some(ip => ip.endsWith(".255"));
+          const notaBcast = incluyeRedBcast ? " (incluyendo direcciones de red .0 y broadcast .255)" : "";
+
+          proxyRangosNodos.push({
+            ip: `${ipIni} - ${ipFin}`,
+            host: `Agrupación de ${clones.length} IPs en la misma MAC`,
+            mac: mAddr,
+            vendor: vendorSample,
+            so: ND,
+            rol: "Rango Proxy ARP / Multi-IP",
+            rolTipo: "host",
+            puertosLista: [],
+            puertosResumen: `${clones.length} IPs responden con la misma MAC (0 puertos)`,
+            numPuertos: 0,
+            observacion: `Comportamiento Proxy ARP / Aislamiento L2: la MAC ${mAddr} (${vendorSample}) responde por ${ipList.length} IPs del segmento${notaBcast}. IP principal activa: ${principales.join(", ")}.`,
+            esRangoProxy: true
+          });
+
+          observacionesAuto.push(
+            `Anomalía de capa 2 detectada (Proxy ARP / Client Isolation): La dirección MAC ${mAddr} (${vendorSample}) responde a las solicitudes ARP de ${ipList.length} direcciones IP distintas (${ipList[0]} a ${ipList[ipList.length - 1]})${notaBcast}. Esto no significa que existan ${ipList.length} máquinas físicas, sino que el gateway/controlador (${principales.join(", ")}) intercepta y responde el tráfico ARP en nombre de toda la subred. Se han agrupado las ${clones.length} IPs secundarias sin puertos en una única entrada de rango para mantener legible la topografía y el inventario.`
+          );
+        }
+      }
+
+      const equipos = [];
+      const inventarioInfra = [];
+
+      for (let ipKey of sortedKeys) {
+        if (skipIps.has(ipKey)) continue;
+        const h = merged[ipKey];
+        const rolObj = inferHostRole(h);
+        const portsList = Object.values(h.ports).sort((a, b) => a.puerto - b.puerto);
+        const puertosStrList = portsList.map(p => `${p.puerto}/${p.proto}`);
+
+        const mAddr = (h.mac || "").trim().toUpperCase();
+        let obsHost = "";
+        if (macsProxyArp[mAddr]) {
+          const totalMacIps = macsProxyArp[mAddr].length;
+          obsHost = `Gateway / interfaz principal de MAC compartida (${mAddr} responde a ${totalMacIps} IPs por Proxy ARP).`;
+        } else if ((h.so || "").toLowerCase().includes("estimado")) {
+          obsHost = "Huella de SO estimada con baja certeza (posible NAT/firewall intermedio).";
+        }
+        if (portsList.some(p => (p.servicio || "").endsWith("?"))) {
+          obsHost = (obsHost + " Servicios marcados con '?' indican puertos abiertos sin banner verificable.").trim();
+        }
+
+        equipos.push({
+          ip: h.ip,
+          host: h.host || ND,
+          mac: h.mac || ND,
+          vendor: h.vendor || ND,
+          so: h.so || ND,
+          rol: rolObj.nombre,
+          rolTipo: rolObj.tipo,
+          puertosLista: puertosStrList,
+          puertosResumen: puertosStrList.length > 0 ? puertosStrList.join(", ") : "Sin puertos abiertos detectados",
+          numPuertos: puertosStrList.length,
+          observacion: obsHost || "Host activo verificado",
+          esRangoProxy: false
+        });
+
+        const etiquetaEquipo = (h.host && h.host !== h.ip) ? `${h.ip} (${h.host})` : h.ip;
+        for (let pInfo of portsList) {
+          const pKey = `${pInfo.puerto}/${pInfo.proto}`;
+          const ssInfo = (sortedKeys.length === 1 && sss[pKey]) ? sss[pKey] : {};
+          const extra = extraServicios[`${h.ip}:${pKey}`] || extraServicios[pKey] || {};
+          const servicio = pInfo.servicio || ND;
+          const software = pInfo.version || ND;
+
+          let obsSrv = extra.obs || "";
+          if (!obsSrv) {
+            if (servicio.endsWith("?")) {
+              obsSrv = `Puerto abierto en ${h.ip}; servicio (${servicio}) estimado por número de puerto sin confirmación de banner.`;
+            } else if (software !== ND) {
+              obsSrv = `Servicio ${servicio} (${software}) expuesto en ${h.ip}.`;
+            } else {
+              obsSrv = `Servicio ${servicio} en ${h.ip}.`;
+            }
+          }
+
+          inventarioInfra.push({
+            equipoIp: etiquetaEquipo,
+            puerto: pKey,
+            puertoNum: pInfo.puerto,
+            proto: pInfo.proto,
+            servicio: servicio,
+            software: software,
+            proceso: ssInfo.proceso || (servicio !== ND ? `${servicio.replace("?", "")}/root` : ND),
+            acceso: ssInfo.acceso || "Red local",
+            necesario: extra.necesario || ND,
+            observaciones: obsSrv
+          });
+        }
+      }
+
+      equipos.push(...proxyRangosNodos);
+
+      const subredes = [];
+      for (let ipKey of sortedKeys) {
+        const mSub = ipKey.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3})\.\d{1,3}$/);
+        if (mSub) {
+          const sub = `${mSub[1]}.0/24`;
+          if (!subredes.includes(sub)) subredes.push(sub);
+        }
+      }
+      const rangoPrincipal = rangos.length > 0 ? rangos.join(", ") : (subredes.length > 0 ? subredes.join(", ") : "Segmento local");
+
+      for (let ipKey of sortedKeys) {
+        if (skipIps.has(ipKey)) continue;
+        const hItem = merged[ipKey];
+        const pList = Object.values(hItem.ports || {});
+        const puertosIncognita = pList.filter(p => (p.servicio || "").includes("?")).map(p => `${p.puerto}/${p.proto} (${p.servicio})`);
+        const soVal = hItem.so || "";
+        if (puertosIncognita.length > 0 || soVal.toLowerCase().includes("estimado")) {
+          const detallesAmb = [];
+          if (soVal.toLowerCase().includes("estimado")) detallesAmb.push(`huella de SO aproximada '${soVal}'`);
+          if (puertosIncognita.length > 0) detallesAmb.push(`servicios sin banner verificado (${puertosIncognita.join(", ")})`);
+          observacionesAuto.push(
+            `Respuestas ambiguas o intercepción de tráfico en ${ipKey} (${hItem.vendor || "Host"}): Se detectó ${detallesAmb.join(" y ")}. Cuando un controlador de red, portal cautivo o firewall intermedio intercepta conexiones TCP, Nmap no recibe banners de aplicación reales (marcando los puertos con '?') y puede estimar un sistema operativo inexacto.`
+          );
+        }
+      }
+
+      const macsUnicasCount = Object.keys(macToIps).length || equipos.length;
+
+      const resumenRed = {
+        rango: rangoPrincipal,
+        subredes,
+        totalEquipos: sortedKeys.length,
+        equiposMostrados: equipos.length,
+        macsUnicas: macsUnicasCount,
+        ipsProxyArp: skipIps.size,
+        equiposConPuertos: equipos.filter(e => e.numPuertos > 0).length,
+        totalPuertos: inventarioInfra.length,
+        observacionesAuto: observacionesAuto.join("\n\n")
+      };
+
+      return { equipos, inventarioInfra, resumenRed };
+    }
+
+    function buildTopologySvgHtml(equipos, resumenRed) {
+      if (!equipos || equipos.length === 0) {
+        return `<p style="color:var(--text-muted);">No se detectaron equipos activos para generar la topografía de red. Carga archivos <code>netdiscover.txt</code> o <code>nmap.txt</code>.</p>`;
+      }
+
+      const rangoTxt = escapeHtml(resumenRed.rango || "Red Local");
+      const totalEq = resumenRed.totalEquipos || equipos.length;
+      const macsUnicas = resumenRed.macsUnicas || equipos.length;
+      const ipsProxy = resumenRed.ipsProxyArp || 0;
+      const conSrv = resumenRed.equiposConPuertos || 0;
+      const totalPts = resumenRed.totalPuertos || 0;
+      const kpiEquiposTexto = ipsProxy > 0 ? `${macsUnicas} (${totalEq} IPs ARP)` : String(totalEq);
+
+      const cols = Math.min(4, Math.max(1, equipos.length));
+      const filasNodos = [];
+      for (let i = 0; i < equipos.length; i += cols) {
+        filasNodos.push(equipos.slice(i, i + cols));
+      }
+
+      const svgW = 920;
+      const cardW = 204;
+      const cardH = 128;
+      const gapX = 18;
+      const rowGapY = 168;
+      const topBusY = 92;
+      const svgH = topBusY + filasNodos.length * rowGapY + 20;
+      const cxRoot = Math.floor(svgW / 2);
+
+      const svgElems = [];
+      const lastBusY = topBusY + (filasNodos.length - 1) * rowGapY;
+
+      svgElems.push(`<line x1="${cxRoot}" y1="58" x2="${cxRoot}" y2="${lastBusY}" class="svg-line" stroke-width="2.5" stroke-dasharray="5,3"/>`);
+
+      const rootW = 380;
+      const rootX = cxRoot - Math.floor(rootW / 2);
+      const subRootTxt = ipsProxy > 0
+        ? `${macsUnicas} MACs Físicas (${ipsProxy} IPs Proxy ARP) | ${conSrv} con Puertos | ${totalPts} Servicios`
+        : `${totalEq} Equipos Activos | ${conSrv} con Puertos | ${totalPts} Servicios`;
+      svgElems.push(`
+        <g>
+          <rect x="${rootX}" y="12" width="${rootW}" height="46" rx="7" fill="#1b3a5f" stroke="#2563eb" stroke-width="1.8"/>
+          <text x="${cxRoot}" y="31" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="700" font-family="Segoe UI, Arial, sans-serif">SEGMENTO DE INFRAESTRUCTURA: ${rangoTxt}</text>
+          <text x="${cxRoot}" y="47" text-anchor="middle" fill="#93c5fd" font-size="10.2" font-family="Consolas, monospace">${subRootTxt}</text>
+        </g>
+      `);
+
+      const coloresRol = {
+        gateway: "#0284c7",
+        dc: "#7c3aed",
+        db: "#0d9488",
+        web: "#2563eb",
+        files: "#d97706",
+        server: "#1b3a5f",
+        host: "#475569"
+      };
+
+      filasNodos.forEach((fila, rIdx) => {
+        const nEnFila = fila.length;
+        const rowTotalW = nEnFila * cardW + (nEnFila - 1) * gapX;
+        const startX = (svgW - rowTotalW) / 2.0;
+        const busY = topBusY + rIdx * rowGapY;
+        const cardY = busY + 20;
+
+        const firstCx = startX + cardW / 2.0;
+        const lastCx = startX + (nEnFila - 1) * (cardW + gapX) + cardW / 2.0;
+        const busLeft = Math.min(firstCx, cxRoot);
+        const busRight = Math.max(lastCx, cxRoot);
+
+        svgElems.push(`<line x1="${busLeft.toFixed(1)}" y1="${busY}" x2="${busRight.toFixed(1)}" y2="${busY}" class="svg-line" stroke-width="2"/>`);
+        svgElems.push(`<circle cx="${cxRoot}" cy="${busY}" r="4" fill="#2563eb"/>`);
+
+        fila.forEach((eq, cIdx) => {
+          const x = startX + cIdx * (cardW + gapX);
+          const cx = x + cardW / 2.0;
+          const colorCab = coloresRol[eq.rolTipo || "host"] || "#475569";
+
+          svgElems.push(`<line x1="${cx.toFixed(1)}" y1="${busY}" x2="${cx.toFixed(1)}" y2="${cardY}" class="svg-line" stroke-width="1.8"/>`);
+          svgElems.push(`<circle cx="${cx.toFixed(1)}" cy="${busY}" r="3.2" fill="${colorCab}"/>`);
+
+          const ipLabel = escapeHtml(eq.ip);
+          const rolLabel = escapeHtml((eq.rol || "Equipo").substring(0, 28).toUpperCase());
+
+          let subStr = (eq.host && eq.host !== ND && eq.host !== eq.ip) ? eq.host : (eq.vendor !== ND ? eq.vendor : "Host detectado");
+          if (subStr.length > 27) subStr = subStr.substring(0, 25) + "..";
+          const subLabel = escapeHtml(subStr);
+
+          const macStr = eq.mac !== ND ? eq.mac : "MAC no disponible";
+          const macLabel = escapeHtml(macStr.substring(0, 24));
+
+          let soStr = eq.so !== ND ? eq.so : "SO sin huella activa";
+          if (soStr.length > 27) soStr = soStr.substring(0, 25) + "..";
+          const soLabel = escapeHtml(soStr);
+
+          const ptsList = eq.puertosLista || [];
+          let ptsStr = "";
+          let ptsFill = "#475569";
+          let ptsBg = "#f1f5f9";
+          if (eq.esRangoProxy) {
+            ptsStr = eq.puertosResumen || "Rango Proxy ARP";
+            ptsFill = "#b45309";
+            ptsBg = "#fef3c7";
+          } else if (ptsList.length > 0) {
+            let ptsPreview = ptsList.slice(0, 4).join(", ");
+            if (ptsList.length > 4) ptsPreview += ` (+${ptsList.length - 4})`;
+            ptsStr = `Puertos (${ptsList.length}): ${ptsPreview}`;
+            ptsFill = "#15803d";
+            ptsBg = "#dcfce7";
+          } else {
+            ptsStr = "ARP Activo (0 puertos)";
+          }
+          if (ptsStr.length > 29) ptsStr = ptsStr.substring(0, 27) + "..";
+          const ptsLabel = escapeHtml(ptsStr);
+
+          svgElems.push(`
+            <g>
+              <rect x="${x.toFixed(1)}" y="${cardY}" width="${cardW}" height="${cardH}" rx="6" class="svg-card" stroke="${colorCab}" stroke-width="1.6"/>
+              <rect x="${x.toFixed(1)}" y="${cardY}" width="${cardW}" height="22" rx="5" fill="${colorCab}"/>
+              <text x="${cx.toFixed(1)}" y="${cardY + 14.5}" text-anchor="middle" fill="#ffffff" font-size="9.5" font-weight="700" font-family="Segoe UI, Arial, sans-serif">${rolLabel}</text>
+              <text x="${cx.toFixed(1)}" y="${cardY + 39}" text-anchor="middle" class="svg-text-main" font-size="11.5" font-weight="700" font-family="Consolas, monospace">${ipLabel}</text>
+              <text x="${cx.toFixed(1)}" y="${cardY + 55}" text-anchor="middle" class="svg-text-muted" font-size="10" font-family="Segoe UI, Arial, sans-serif">${subLabel}</text>
+              <text x="${cx.toFixed(1)}" y="${cardY + 71}" text-anchor="middle" class="svg-text-muted" font-size="9.5" font-family="Consolas, monospace">${macLabel}</text>
+              <text x="${cx.toFixed(1)}" y="${cardY + 86}" text-anchor="middle" class="svg-text-muted" font-size="9.5" font-family="Segoe UI, Arial, sans-serif">${soLabel}</text>
+              <rect x="${(x + 10).toFixed(1)}" y="${cardY + 96}" width="${cardW - 20}" height="22" rx="4" fill="${ptsBg}"/>
+              <text x="${cx.toFixed(1)}" y="${cardY + 110.5}" text-anchor="middle" fill="${ptsFill}" font-size="9.5" font-weight="700" font-family="Consolas, monospace">${ptsLabel}</text>
+            </g>
+          `);
+        });
+      });
+
+      return `
+        <div class="topo-box">
+          <div class="topo-kpis">
+            <div class="topo-kpi">
+              <span class="topo-kpi-label">Subred / Segmento</span>
+              <span class="topo-kpi-val">${rangoTxt}</span>
+            </div>
+            <div class="topo-kpi">
+              <span class="topo-kpi-label">Equipos Físicos (MACs)</span>
+              <span class="topo-kpi-val">${escapeHtml(kpiEquiposTexto)}</span>
+            </div>
+            <div class="topo-kpi">
+              <span class="topo-kpi-label">Equipos con Servicios</span>
+              <span class="topo-kpi-val">${conSrv}</span>
+            </div>
+            <div class="topo-kpi">
+              <span class="topo-kpi-label">Puertos Abiertos Totales</span>
+              <span class="topo-kpi-val">${totalPts}</span>
+            </div>
+          </div>
+          <div class="topo-svg-container">
+            <svg viewBox="0 0 ${svgW} ${svgH}" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Topografía de Red">
+              <rect x="0" y="0" width="${svgW}" height="${svgH}" rx="8" class="svg-bg"/>
+              ${svgElems.join("")}
+            </svg>
+          </div>
+        </div>
+      `;
     }
 
     function parseSs(content) {
@@ -1228,9 +1897,16 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
       const lowerName = fileName.toLowerCase();
       const detected = { type: "generic", data: {} };
 
+      if (isNetdiscoverFile(fileName, content)) {
+        detected.type = "netdiscover";
+        detected.netdiscover = parseNetdiscover(content);
+        return detected;
+      }
+
       if (lowerName.includes("nmap") || content.includes("Nmap scan report") || content.includes("PORT   STATE SERVICE")) {
         detected.type = "nmap";
         detected.ports = parseNmap(content);
+        detected.multiHosts = parseNmapMulti(content, fileName);
         const hostMatch = content.match(/Nmap scan report for (?:([^\s()]+)\s+\(([\d.]+)\)|([\d.]+)|([^\s()]+))/);
         if (hostMatch) {
           detected.data.host = hostMatch[1] || hostMatch[4] || hostMatch[3] || "";
@@ -1239,7 +1915,21 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
         const macMatch = content.match(/MAC Address:\s*([0-9A-Fa-f:]+)/);
         if (macMatch) detected.data.mac = macMatch[1];
         const osMatch = content.match(/(?:OS details|Running|Service Info: OS):\s*([^\r\n]+)/);
-        if (osMatch) detected.data.so = osMatch[1].trim();
+        if (osMatch) {
+          detected.data.so = osMatch[1].trim();
+        } else {
+          const osGuess = content.match(/(?:Running \(JUST GUESSING\)|Aggressive OS guesses):\s*([^\r\n]+)/);
+          if (osGuess) {
+            const firstG = osGuess[1].split(",")[0].trim();
+            detected.data.so = `${firstG} (estimado por Nmap)`;
+          }
+        }
+        const verMatch = content.match(/Nmap\s+([\d.]+)/);
+        detected.data.nmapVer = verMatch ? verMatch[1] : "7.9x";
+        const cmdMatch = content.match(/Nmap .* as:\s*([^\r\n]+)/);
+        detected.data.nmapCmd = cmdMatch ? cmdMatch[1].trim() : `nmap (${fileName})`;
+        const dateMatch = content.match(/Starting Nmap [\d.]+ .* at (\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})/);
+        detected.data.nmapDate = dateMatch ? dateMatch[1].trim() : "";
         return detected;
       }
 
@@ -1281,40 +1971,367 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
       return detected;
     }
 
+    function buildInfraControlesAndHallazgos(equipos, inventarioInfra, resumenRed, fechaRef) {
+      const ipsProxy = resumenRed.ipsProxyArp || 0;
+      const macsUnicas = resumenRed.macsUnicas || 0;
+      const totalIps = resumenRed.totalEquipos || 0;
+
+      const puertosHttpPlano = [];
+      const bannersExpuestos = [];
+      const puertosInsegurosOVoip = [];
+      let tieneHttps = false;
+
+      for (let item of (inventarioInfra || [])) {
+        const p = item.puerto || "";
+        const ipEq = item.equipoIp || "";
+        const sw = item.software || ND;
+        const srv = item.servicio || ND;
+        if (p === "443/tcp" || srv.toLowerCase().includes("https") || srv.toLowerCase().includes("ssl")) {
+          tieneHttps = true;
+        }
+        if ((p === "80/tcp" || p === "8080/tcp") && !srv.toLowerCase().includes("https")) {
+          puertosHttpPlano.push(`${ipEq} (${p} - ${sw !== ND ? sw : srv})`);
+        }
+        if (sw && sw !== ND && /\d/.test(sw)) {
+          bannersExpuestos.push(`${ipEq} (${p}: ${sw})`);
+        }
+        if (/^(21|23|2000|5060)\//.test(p)) {
+          puertosInsegurosOVoip.push(`${ipEq} (${p} ${srv})`);
+        }
+      }
+
+      const ctrlProxyVal = ipsProxy > 0
+        ? `Detectadas ${ipsProxy} IPs clonadas bajo una misma MAC (Proxy ARP activo)`
+        : "Cada dirección IP responde con su propia dirección MAC única";
+      const ctrlProxyEst = ipsProxy > 0 ? "No cumple" : "Cumple";
+
+      const ctrlHttpVal = puertosHttpPlano.length > 0
+        ? `HTTP sin cifrar activo en: ${puertosHttpPlano.join(", ")}`
+        : (tieneHttps ? "HTTPS activo" : "Sin paneles web expuestos");
+      const ctrlHttpEst = (puertosHttpPlano.length > 0 && !tieneHttps) ? "No cumple" : "Cumple";
+
+      const ctrlBannerVal = bannersExpuestos.length > 0
+        ? `Expuesta (${bannersExpuestos.join(", ")})`
+        : "Versiones ocultas o no divulgadas en cabeceras";
+      const ctrlBannerEst = bannersExpuestos.length > 0 ? "No cumple" : "Cumple";
+
+      const ctrlVoipVal = puertosInsegurosOVoip.length > 0
+        ? `Expuestos (${puertosInsegurosOVoip.join(", ")})`
+        : "Ningún puerto FTP/Telnet/VoIP expuesto";
+      const ctrlVoipEst = puertosInsegurosOVoip.length > 0 ? "No cumple" : "Cumple";
+
+      const controlesInfra = [
+        {
+          titulo: "5.1 Segmentación de red y capa de enlace (ARP / VLAN)",
+          filas: [
+            [
+              "Ausencia de respuestas Proxy ARP masivas en el segmento",
+              "netdiscover / nmap -sn (análisis de tabla ARP)",
+              ctrlProxyVal,
+              ctrlProxyEst
+            ],
+            [
+              "Correspondencia de equipos físicos (MACs reales vs IPs)",
+              "Consolidación de direcciones MAC OUI",
+              `${macsUnicas} MAC(s) física(s) única(s) para ${totalIps} IP(s) activas`,
+              ipsProxy === 0 ? "Cumple" : "No verificado"
+            ]
+          ]
+        },
+        {
+          titulo: "5.2 Exposición de servicios y filtrado perimetral",
+          filas: [
+            [
+              "Superficie de servicios expuestos en la subred",
+              "nmap -sV (escaneo de puertos TCP/UDP)",
+              `${resumenRed.equiposConPuertos || 0} host(s) con puertos abiertos (${resumenRed.totalPuertos || 0} puerto(s) en total)`,
+              (resumenRed.totalPuertos || 0) <= 5 ? "Cumple" : "No cumple"
+            ],
+            [
+              "Restricción de protocolos en texto claro o señalización (FTP, Telnet, SIP, VoIP)",
+              "nmap -sV (puertos de transferencia y señalización)",
+              ctrlVoipVal,
+              ctrlVoipEst
+            ]
+          ]
+        },
+        {
+          titulo: "5.3 Cifrado y endurecimiento de servicios de administración",
+          filas: [
+            [
+              "Paneles de administración web exclusivamente sobre HTTPS (TLS)",
+              "nmap -p 80,443,8080",
+              ctrlHttpVal,
+              ctrlHttpEst
+            ],
+            [
+              "Ocultación de versión de servidor y banners de software",
+              "nmap -sV (inspección de banners)",
+              ctrlBannerVal,
+              ctrlBannerEst
+            ]
+          ]
+        }
+      ];
+
+      const hallazgosInfra = [];
+      let idx = 1;
+
+      if (puertosHttpPlano.length > 0 || bannersExpuestos.length > 0) {
+        const compStr = (puertosHttpPlano.length > 0 ? puertosHttpPlano : bannersExpuestos).join(", ");
+        hallazgosInfra.push({
+          id: `VUL-0${idx}`,
+          titulo: "Servicio web de administración sobre HTTP sin cifrar y divulgación de versión de software",
+          cve: "CWE-319 / CWE-200",
+          componente: compStr,
+          descripcion: "Se ha detectado un servicio HTTP activo sin cifrado TLS (el puerto 443/tcp se encuentra filtrado o cerrado) que además expone de forma pública el nombre y versión exacta del servidor web en sus cabeceras.",
+          deteccion: "Escaneo de versiones y puertos con Nmap (-sV).",
+          evidencia: `Respuesta Nmap en ${compStr}.`,
+          severidad: "Media",
+          probabilidad_e_impacto: "Probabilidad Media / Impacto Medio (interceptación de tráfico en red local y enumeración de versión).",
+          exploit: "No requiere exploit para captura pasiva o fingerprinting",
+          estado: "Abierta",
+          recomendacion: "Deshabilitar el acceso administrativo sobre HTTP plano o forzar redirección a HTTPS (443/tcp) con TLS 1.2/1.3, y ocultar la etiqueta de versión en la configuración del servidor web.",
+          accion: "Habilitar HTTPS (TLS 1.2+) y ocultar el banner de versión en el servicio web expuesto.",
+          mitigacion: "Restringir el acceso al puerto HTTP exclusivamente a la VLAN de gestión.",
+          responsable: "Administración de Red / Sistemas",
+          fecha_limite: fechaRef,
+          esfuerzo: "Bajo",
+          estado_plan: "Pendiente",
+          prioridad: "1"
+        });
+        idx++;
+      }
+
+      if (puertosInsegurosOVoip.length > 0) {
+        const compVoip = puertosInsegurosOVoip.join(", ");
+        hallazgosInfra.push({
+          id: `VUL-0${idx}`,
+          titulo: "Exposición de puertos de transferencia en texto claro o señalización de voz (FTP / Telnet / VoIP)",
+          cve: "CWE-284",
+          componente: compVoip,
+          descripcion: "Se han detectado abiertos hacia el segmento auditado puertos asociados a transferencia en texto claro o señalización de telefonía/voz, aumentando la superficie de ataque en la red local.",
+          deteccion: "Escaneo de puertos y servicios con Nmap.",
+          evidencia: `Puertos detectados en estado open: ${compVoip}.`,
+          severidad: "Media",
+          probabilidad_e_impacto: "Probabilidad Media / Impacto Medio (enumeración o acceso no autorizado a servicios internos).",
+          exploit: "No verificado",
+          estado: "Abierta",
+          recomendacion: "Aplicar listas de control de acceso (ACL) en el equipo o controlador de red para restringir el acceso desde clientes a los puertos expuestos innecesarios.",
+          accion: `Filtrar mediante ACL de cortafuegos los puertos expuestos (${compVoip}).`,
+          mitigacion: "Segmentar el tráfico de gestión y señalización en una VLAN dedicada.",
+          responsable: "Administración de Red",
+          fecha_limite: fechaRef,
+          esfuerzo: "Bajo",
+          estado_plan: "Pendiente",
+          prioridad: "2"
+        });
+        idx++;
+      }
+
+      if (ipsProxy > 0) {
+        hallazgosInfra.push({
+          id: `VUL-0${idx}`,
+          titulo: "Respuesta ARP masiva (Proxy ARP) / Enmascaramiento de subred bajo una única dirección MAC",
+          cve: "CWE-706",
+          componente: `Segmento ${resumenRed.rango || ND} (${ipsProxy} IPs secundarias clonadas)`,
+          descripcion: "Una única interfaz física de pasarela responde a las solicitudes ARP de múltiples direcciones del rango de red (incluyendo direcciones de red .0 y broadcast .255 cuando aplica), haciendo que los escáneres de red reporten cientos de hosts aparentes que en realidad corresponden al mismo equipo físico.",
+          deteccion: "Descubrimiento ARP pasivo/activo con Netdiscover y Nmap (-sn).",
+          evidencia: resumenRed.observacionesAuto || "Múltiples IPs asociadas a una sola dirección MAC.",
+          severidad: "Baja",
+          probabilidad_e_impacto: "Probabilidad Baja / Impacto Bajo (distorsión de inventario y monitorización de red).",
+          exploit: "No aplica (configuración de capa 2 / Proxy ARP)",
+          estado: "Abierta",
+          recomendacion: "Verificar si Proxy ARP es estrictamente necesario para el aislamiento de clientes (Client Isolation). Si no es requerido por diseño, deshabilitar Proxy ARP en la interfaz del gateway para evitar respuestas ARP sobre IPs no asignadas.",
+          accion: "Revisar y ajustar la configuración de Proxy ARP en la interfaz de la pasarela de red.",
+          mitigacion: "Documentar la configuración de Proxy ARP / Client Isolation en el inventario de red.",
+          responsable: "Administración de Red",
+          fecha_limite: fechaRef,
+          esfuerzo: "Bajo",
+          estado_plan: "Pendiente",
+          prioridad: "3"
+        });
+      }
+
+      return { controlesInfra, hallazgosInfra };
+    }
+
+    function renderInfraestructura() {
+      const isInfra = AppState.modo === "infra";
+      const infraBlock = document.getElementById("infra_section_block");
+      const topoContainer = document.getElementById("topo_container");
+      const tbodyEquipos = document.getElementById("tbody_equipos_infra");
+      const obsRedEl = document.getElementById("rep_observaciones_red");
+      const sec3Title = document.getElementById("sec3_title");
+      const sec4Title = document.getElementById("sec4_title");
+      const lblHost = document.getElementById("lbl_sec3_host");
+      const lblIp = document.getElementById("lbl_sec3_ip");
+      const modeLabel = document.getElementById("modeLabel");
+      const subPrincipal = document.getElementById("rep_subtitulo_principal");
+      const titPrincipal = document.getElementById("rep_titulo_principal");
+
+      if (modeLabel) {
+        modeLabel.innerText = isInfra ? "Modo: Infraestructura" : "Modo: Equipo";
+      }
+      if (sec3Title) {
+        sec3Title.innerText = isInfra ? "3. Identificación del equipo / infraestructura" : "3. Identificación del equipo";
+      }
+      if (sec4Title) {
+        sec4Title.innerText = isInfra ? "4. Inventario de servicios y puertos (Consolidado por Equipo)" : "4. Inventario de servicios y puertos";
+      }
+      if (lblHost) {
+        lblHost.innerText = isInfra ? "Segmento / Nombre de red" : "Nombre de host";
+      }
+      if (lblIp) {
+        lblIp.innerText = isInfra ? "Direcciones IP detectadas" : "Direccion IP / MAC";
+      }
+      if (subPrincipal) {
+        subPrincipal.innerText = isInfra
+          ? "Modo Infraestructura de Red (Multi-Host + Topografía) — Plantilla oficial · Versión 1.0"
+          : "Servicios, configuración y vulnerabilidades — Plantilla con guía de cumplimentación · Versión 1.0";
+      }
+      if (titPrincipal && (titPrincipal.innerText.includes("de un equipo") || titPrincipal.innerText.includes("de infraestructura de red"))) {
+        titPrincipal.innerText = isInfra
+          ? "Informe de auditoría de seguridad de infraestructura de red"
+          : "Informe de auditoría de seguridad de un equipo";
+      }
+
+      if (!isInfra) {
+        if (infraBlock) infraBlock.style.display = "none";
+        return;
+      }
+
+      if (infraBlock) infraBlock.style.display = "block";
+      if (topoContainer) {
+        topoContainer.innerHTML = buildTopologySvgHtml(AppState.equipos, AppState.resumenRed);
+      }
+
+      if (obsRedEl) {
+        const manualObs = AppState.general && AppState.general.observaciones_red;
+        const autoObs = AppState.resumenRed && AppState.resumenRed.observacionesAuto;
+        obsRedEl.innerText = manualObs || autoObs || "Sin anomalías de capa de enlace (Proxy ARP / duplicidad MAC) detectadas. Haz clic aquí para añadir tus observaciones sobre la red o anomalías de direccionamiento.";
+      }
+
+      if (tbodyEquipos) {
+        tbodyEquipos.innerHTML = "";
+        if (!AppState.equipos || AppState.equipos.length === 0) {
+          tbodyEquipos.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted);">Carga salidas de <code>netdiscover.txt</code> o escaneos <code>nmap.txt</code> para poblar los equipos descubiertos.</td></tr>`;
+          return;
+        }
+
+        for (let eq of AppState.equipos) {
+          const tr = document.createElement("tr");
+          let badgeHtml = `<span class="badge badge-nd">0 abiertos</span>`;
+          if (eq.esRangoProxy) {
+            badgeHtml = `<span class="badge badge-stopped">Proxy ARP</span>`;
+          } else if (eq.numPuertos > 0) {
+            badgeHtml = `<span class="badge badge-cumple">${eq.numPuertos} abierto(s)</span>`;
+          }
+          const obsCell = eq.observacion || "—";
+          tr.innerHTML = `
+            <td style="font-weight:700; font-family:Consolas,monospace; color:var(--primary);" contenteditable="true">${escapeHtml(eq.ip)}</td>
+            <td style="font-family:Consolas,monospace; font-size:12px;" contenteditable="true">${escapeHtml(eq.mac)}</td>
+            <td contenteditable="true">${escapeHtml(eq.vendor)}</td>
+            <td style="font-weight:600;" contenteditable="true">${escapeHtml(eq.host)}</td>
+            <td contenteditable="true">${escapeHtml(eq.so)}</td>
+            <td contenteditable="true">${escapeHtml(eq.rol)}</td>
+            <td contenteditable="true">${badgeHtml} <span style="font-size:11.5px; color:var(--text-muted); margin-left:4px;">${escapeHtml(eq.puertosResumen)}</span></td>
+            <td style="font-size:12px;" contenteditable="true">${escapeHtml(obsCell)}</td>
+          `;
+          tbodyEquipos.appendChild(tr);
+        }
+      }
+    }
+
     function renderReport() {
       const g = AppState.general;
       const getG = (key, fallback = ND) => (g[key] && g[key].trim()) ? g[key].trim() : fallback;
+      const isInfra = AppState.modo === "infra" && AppState.equipos.length > 0;
+
+      const macsTxt = isInfra
+        ? `${AppState.resumenRed.macsUnicas || AppState.equipos.length} equipos físicos (MACs únicas)` + (AppState.resumenRed.ipsProxyArp > 0 ? ` / ${AppState.resumenRed.totalEquipos} IPs respondieron por Proxy ARP` : "")
+        : "";
+      const defaultActivo = isInfra
+        ? `Infraestructura de red (${AppState.resumenRed.rango}) — ${macsTxt}`
+        : "Infraestructura Evaluada";
+      const ipsPrincipales = isInfra
+        ? AppState.equipos.filter(e => !e.esRangoProxy).slice(0, 6).map(e => e.ip)
+        : [];
+      const ipsSample = isInfra
+        ? ipsPrincipales.join(", ") + (AppState.resumenRed.ipsProxyArp > 0 ? ` (+ ${AppState.resumenRed.ipsProxyArp} IPs secundarias en Proxy ARP)` : "")
+        : ND;
+      const defaultHost = isInfra
+        ? `Segmento ${AppState.resumenRed.rango} (${macsTxt})`
+        : ND;
+      const uniqueSos = isInfra
+        ? [...new Set(AppState.equipos.filter(e => !e.esRangoProxy).map(e => e.so).filter(s => s && s !== ND))]
+        : [];
+      const defaultSo = isInfra && uniqueSos.length > 0 ? uniqueSos.slice(0, 4).join(" / ") : ND;
+      const uniqueRoles = isInfra
+        ? [...new Set(AppState.equipos.filter(e => !e.esRangoProxy).map(e => e.rol).filter(Boolean))]
+        : [];
+      const defaultTipoEq = isInfra
+        ? `Infraestructura de red (${uniqueRoles.slice(0, 3).join(", ")})`
+        : "Servidor";
+      const defaultFuncion = isInfra
+        ? `Pasarela y controladores de red / ${AppState.resumenRed.equiposConPuertos} host(s) con servicios expuestos (${AppState.resumenRed.totalPuertos} puertos abiertos)`
+        : "Servidor de infraestructura";
+      const defaultTipoAnalisis = isInfra
+        ? "Caja negra / Escaneo de red local (ARP y TCP)"
+        : "Caja blanca";
+      const defaultResumen = isInfra
+        ? `Auditoría técnica de red sobre el segmento ${AppState.resumenRed.rango}. Aunque los barridos iniciales devolvieron ${AppState.resumenRed.totalEquipos} direcciones IP aparentes, el análisis de capa de enlace (MAC OUI) demostró la existencia de ${AppState.resumenRed.macsUnicas || AppState.equipos.length} equipo(s) físico(s) real(es)` + (AppState.resumenRed.ipsProxyArp > 0 ? `, debido a que una misma dirección MAC responde mediante Proxy ARP a ${AppState.resumenRed.ipsProxyArp} direcciones IP adicionales del rango. ` : ". ") + `Se identificaron ${AppState.resumenRed.totalPuertos} puerto(s) abierto(s) distribuidos en ${AppState.resumenRed.equiposConPuertos} equipo(s).`
+        : "Informe técnico de auditoría de seguridad conforme a la plantilla oficial de 10 secciones.";
+
+      const fechaDoc = getG("fecha", "26/10/2026");
+
+      // Actualizar controles y hallazgos dinámicos si estamos en modo infra sin archivos manuales
+      if (AppState.files && !AppState.files.has("controles.txt")) {
+        if (isInfra) {
+          const autoInfra = buildInfraControlesAndHallazgos(AppState.equipos, AppState.inventarioInfra, AppState.resumenRed, fechaDoc);
+          AppState.controles = autoInfra.controlesInfra;
+          if (!AppState.files.has("hallazgos.txt")) {
+            AppState.hallazgos = autoInfra.hallazgosInfra;
+          }
+        } else {
+          AppState.controles = parseControles(GENERIC_CONTROLES);
+          if (!AppState.files.has("hallazgos.txt")) {
+            AppState.hallazgos = [];
+          }
+        }
+      }
 
       document.getElementById("rep_titulo").innerText = getG("titulo", "Auditoría de Seguridad");
       document.getElementById("rep_codigo").innerText = getG("codigo", "AUD-2026-10-26-0");
-      document.getElementById("rep_fecha").innerText = getG("fecha", "26/10/2026");
+      document.getElementById("rep_fecha").innerText = fechaDoc;
       document.getElementById("rep_auditor").innerText = getG("auditor", ND);
       document.getElementById("rep_solicitante").innerText = getG("solicitante", ND);
       document.getElementById("rep_version").innerText = getG("version", "V1.0 - Revisado");
       document.getElementById("rep_confidencialidad").innerText = getG("confidencialidad", "Confidencial");
 
-      document.getElementById("rep_activo").innerText = getG("activo", "Infraestructura Evaluada");
+      document.getElementById("rep_activo").innerText = getG("activo", defaultActivo);
       document.getElementById("rep_fuera_de_alcance").innerText = getG("fuera_de_alcance", ND);
-      document.getElementById("rep_tipo_de_analisis").innerText = getG("tipo_de_analisis", "Caja blanca");
+      document.getElementById("rep_tipo_de_analisis").innerText = getG("tipo_de_analisis", defaultTipoAnalisis);
       document.getElementById("rep_autorizacion").innerText = getG("autorizacion", "Autorizado");
 
-      document.getElementById("rep_host").innerText = getG("host", ND);
-      document.getElementById("rep_ip_mac").innerText = getG("ip_mac", ND);
-      document.getElementById("rep_so").innerText = getG("so", ND);
+      document.getElementById("rep_host").innerText = isInfra ? (g.host_manual || defaultHost) : getG("host", ND);
+      document.getElementById("rep_ip_mac").innerText = isInfra ? (g.ip_mac_manual || ipsSample) : getG("ip_mac", ND);
+      document.getElementById("rep_so").innerText = isInfra ? (g.so_manual || defaultSo) : getG("so", ND);
       document.getElementById("rep_kernel").innerText = getG("kernel", ND);
-      document.getElementById("rep_tipo_de_equipo").innerText = getG("tipo_de_equipo", "Servidor");
-      document.getElementById("rep_funcion").innerText = getG("funcion", "Servidor de infraestructura");
+      document.getElementById("rep_tipo_de_equipo").innerText = getG("tipo_de_equipo", defaultTipoEq);
+      document.getElementById("rep_funcion").innerText = getG("funcion", defaultFuncion);
       document.getElementById("rep_propietario").innerText = getG("propietario", ND);
       document.getElementById("rep_ultimo_arranque").innerText = getG("ultimo_arranque", ND);
 
-      document.getElementById("rep_resumen_texto").innerText = getG("resumen", "Informe técnico de auditoría de seguridad conforme a la plantilla oficial de 10 secciones.");
+      document.getElementById("rep_resumen_texto").innerText = getG("resumen", defaultResumen);
 
       document.getElementById("rep_firma_auditor_nom").innerText = getG("auditor", ND);
-      document.getElementById("rep_firma_auditor_fec").innerText = getG("fecha", "26/10/2026");
+      document.getElementById("rep_firma_auditor_fec").innerText = fechaDoc;
       document.getElementById("rep_firma_auditor_sig").innerText = getG("firma_auditor", getG("auditor", ND));
-      document.getElementById("tbl_ver_fecha").innerText = getG("fecha", "26/10/2026");
+      document.getElementById("tbl_ver_fecha").innerText = fechaDoc;
       document.getElementById("tbl_ver_autor").innerText = getG("auditor", ND);
 
+      renderInfraestructura();
       renderInventario();
       renderControles();
       renderVulnerabilidades();
@@ -1325,15 +2342,29 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
 
     function renderInventario() {
       const tbody = document.getElementById("tbody_inventario");
+      const thEquipoIp = document.getElementById("th_equipo_ip");
+      const isInfra = AppState.modo === "infra";
       tbody.innerHTML = "";
-      if (AppState.inventario.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Sin datos de puertos. Carga archivos nmap.txt o ss.txt para rellenar automáticamente.</td></tr>`;
+
+      if (thEquipoIp) {
+        thEquipoIp.style.display = isInfra ? "" : "none";
+      }
+
+      const sourceList = isInfra ? AppState.inventarioInfra : AppState.inventario;
+      const colSpan = isInfra ? 8 : 7;
+
+      if (!sourceList || sourceList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; color:var(--text-muted);">Sin datos de puertos abiertos. Carga archivos <code>nmap.txt</code> o <code>ss.txt</code> para rellenar automáticamente.</td></tr>`;
         return;
       }
 
-      for (let item of AppState.inventario) {
+      for (let item of sourceList) {
         const tr = document.createElement("tr");
+        const colEquipo = isInfra
+          ? `<td style="font-weight:700; font-family:Consolas,monospace; color:var(--primary);" contenteditable="true">${escapeHtml(item.equipoIp || ND)}</td>`
+          : "";
         tr.innerHTML = `
+          ${colEquipo}
           <td style="font-weight:600;" contenteditable="true">${escapeHtml(item.puerto)}</td>
           <td contenteditable="true">${escapeHtml(item.servicio)}</td>
           <td contenteditable="true">${escapeHtml(item.software)}</td>
@@ -1355,28 +2386,29 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
     }
 
     function renderControles() {
-      const secMap = {
-        "5.1": document.getElementById("tbody_cfg_5_1"),
-        "5.2": document.getElementById("tbody_cfg_5_2"),
-        "5.3": document.getElementById("tbody_cfg_5_3"),
-        "5.4": document.getElementById("tbody_cfg_5_4"),
-        "5.5": document.getElementById("tbody_cfg_5_5"),
-        "5.6": document.getElementById("tbody_cfg_5_6"),
-      };
-
-      for (let k in secMap) secMap[k].innerHTML = "";
+      const containerSec5 = document.getElementById("container_controles_sec5");
+      if (!containerSec5) return;
+      containerSec5.innerHTML = "";
 
       for (let sec of AppState.controles) {
-        let targetTbody = null;
-        for (let numKey in secMap) {
-          if (sec.titulo.startsWith(numKey)) {
-            targetTbody = secMap[numKey];
-            break;
-          }
-        }
-        if (!targetTbody) targetTbody = secMap["5.1"];
+        const subTitle = document.createElement("div");
+        subTitle.className = "subsection-title";
+        subTitle.contentEditable = "true";
+        subTitle.innerText = sec.titulo || "Subsección de control";
+        containerSec5.appendChild(subTitle);
 
-        for (let row of sec.filas) {
+        const tblWrap = document.createElement("div");
+        tblWrap.className = "table-container";
+        const tbl = document.createElement("table");
+        tbl.className = "pdf-table";
+        tbl.innerHTML = `
+          <thead>
+            <tr><th>Control</th><th>Cómo comprobarlo</th><th>Valor encontrado</th><th style="width:110px;">Estado</th></tr>
+          </thead>
+        `;
+        const tbody = document.createElement("tbody");
+
+        for (let row of (sec.filas || [])) {
           const tr = document.createElement("tr");
           const estado = row[3] || ND;
           const badgeCls = getEstadoBadgeClass(estado);
@@ -1386,8 +2418,12 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
             <td contenteditable="true">${row[2]}</td>
             <td style="text-align:center;"><span class="badge ${badgeCls}" contenteditable="true">${escapeHtml(estado)}</span></td>
           `;
-          targetTbody.appendChild(tr);
+          tbody.appendChild(tr);
         }
+
+        tbl.appendChild(tbody);
+        tblWrap.appendChild(tbl);
+        containerSec5.appendChild(tblWrap);
       }
     }
 
@@ -1566,11 +2602,17 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
       AppState.files = filesMap;
       AppState.anexos = [];
       const nmaps = {};
+      const nmapsHosts = {};
+      const netdiscovers = [];
       const sss = {};
       const extraServicios = {};
+      const autoHerramientas = [];
 
       if (filesMap.has("general.txt")) {
         AppState.general = parseKeyValue(filesMap.get("general.txt"));
+        if (AppState.general.host) AppState.general.host_manual = AppState.general.host;
+        if (AppState.general.ip_mac) AppState.general.ip_mac_manual = AppState.general.ip_mac;
+        if (AppState.general.so) AppState.general.so_manual = AppState.general.so;
       } else {
         AppState.general = {};
       }
@@ -1594,16 +2636,70 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
         AppState.hallazgos = [];
       }
 
-      if (filesMap.has("herramientas.txt")) {
+      const hasHerramientasTxt = filesMap.has("herramientas.txt");
+      if (hasHerramientasTxt) {
         AppState.herramientas = parseTablePipe(filesMap.get("herramientas.txt"), 5);
       } else {
         AppState.herramientas = [];
       }
 
+      const nowStr = document.getElementById("rep_fecha") ? document.getElementById("rep_fecha").innerText + " 10:00" : "";
+
       for (let [fName, content] of filesMap.entries()) {
+        if (["general.txt", "hallazgos.txt", "controles.txt", "servicios.txt", "herramientas.txt"].includes(fName.toLowerCase())) {
+          continue;
+        }
+
         const auto = autoDetectTxtContents(fName, content);
+        if (auto.type === "netdiscover") {
+          if (auto.netdiscover && Object.keys(auto.netdiscover.hosts).length > 0) {
+            netdiscovers.push(auto.netdiscover);
+            autoHerramientas.push([
+              "Netdiscover",
+              "0.10",
+              "Descubrimiento ARP de equipos en red",
+              `netdiscover (${fName})`,
+              ""
+            ]);
+          }
+          AppState.anexos.push({
+            nombre: fName,
+            contenido: cleanAnsi(content),
+            relacionado: "Sección 3 (Topografía e inventario de equipos en red)"
+          });
+          continue;
+        }
+
         if (auto.type === "nmap") {
           Object.assign(nmaps, auto.ports);
+          const mHosts = auto.multiHosts || {};
+          for (let [hKey, hInfo] of Object.entries(mHosts)) {
+            if (!nmapsHosts[hKey]) {
+              nmapsHosts[hKey] = {
+                ip: hInfo.ip || hKey,
+                host: "",
+                mac: "",
+                vendor: "",
+                so: "",
+                ports: {}
+              };
+            }
+            const ex = nmapsHosts[hKey];
+            if (hInfo.host && !ex.host) ex.host = hInfo.host;
+            if (hInfo.mac && !ex.mac) ex.mac = hInfo.mac;
+            if (hInfo.vendor && !ex.vendor) ex.vendor = hInfo.vendor;
+            if (hInfo.so && !ex.so) ex.so = hInfo.so;
+            Object.assign(ex.ports, hInfo.ports || {});
+          }
+
+          autoHerramientas.push([
+            "Nmap",
+            auto.data.nmapVer || "7.9x",
+            `Escaneo de red y servicios (${Object.keys(mHosts).length} host(s))`,
+            auto.data.nmapCmd || `nmap (${fName})`,
+            auto.data.nmapDate || nowStr
+          ]);
+
           if (auto.data.host && !AppState.general.host) AppState.general.host = auto.data.host;
           if (auto.data.ip && !AppState.general.ip_mac) {
             AppState.general.ip_mac = auto.data.ip + (auto.data.mac ? ` / ${auto.data.mac}` : "");
@@ -1611,28 +2707,61 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
           if (auto.data.so && !AppState.general.so) AppState.general.so = auto.data.so;
         } else if (auto.type === "ss") {
           Object.assign(sss, auto.sockets);
+          autoHerramientas.push([
+            "ss / iproute2",
+            "Sistema",
+            "Inspección local de sockets en escucha",
+            `ss -tulpn (${fName})`,
+            nowStr
+          ]);
         } else if (auto.type === "sysinfo") {
           if (auto.data.kernel && !AppState.general.kernel) AppState.general.kernel = auto.data.kernel;
           if (auto.data.so && !AppState.general.so) AppState.general.so = auto.data.so;
         }
 
-        if (!["general.txt", "hallazgos.txt", "controles.txt", "servicios.txt", "herramientas.txt"].includes(fName.toLowerCase())) {
-          let relacion = "Sección 4 y 5";
-          if (fName.toLowerCase().includes("nmap")) relacion = "Sección 4 (Inventario)";
-          else if (fName.toLowerCase().includes("ss") || fName.toLowerCase().includes("netstat")) relacion = "Sección 4 y 5.2";
-          else if (fName.toLowerCase().includes("find") || fName.toLowerCase().includes("perm")) relacion = "Sección 5.3 y Permisos";
+        let relacion = "Sección 4 y 5";
+        if (fName.toLowerCase().includes("nmap")) relacion = "Sección 3 y 4 (Equipos e inventario)";
+        else if (fName.toLowerCase().includes("ss") || fName.toLowerCase().includes("netstat")) relacion = "Sección 4 y 5.2";
+        else if (fName.toLowerCase().includes("find") || fName.toLowerCase().includes("perm")) relacion = "Sección 5.3 y Permisos";
 
-          AppState.anexos.push({
-            nombre: fName,
-            contenido: content,
-            relacionado: relacion
-          });
+        AppState.anexos.push({
+          nombre: fName,
+          contenido: content,
+          relacionado: relacion
+        });
+      }
+
+      if (!hasHerramientasTxt && autoHerramientas.length > 0) {
+        const firstDetectedDate = (autoHerramientas.find(r => r[4] && r[4] !== nowStr) || [])[4] || nowStr;
+        for (let r of autoHerramientas) {
+          if (!r[4]) r[4] = firstDetectedDate;
         }
+        AppState.herramientas = autoHerramientas;
+      }
+
+      const infraConsolidated = consolidateInfrastructure(netdiscovers, nmapsHosts, sss, extraServicios);
+      AppState.equipos = infraConsolidated.equipos;
+      AppState.inventarioInfra = infraConsolidated.inventarioInfra;
+      AppState.resumenRed = infraConsolidated.resumenRed;
+
+      // Determinar modo (auto-detección o manual)
+      const cfgModo = normalizeStr(AppState.general.modo || "");
+      if (AppState.modoManual) {
+        AppState.modo = AppState.modoManual;
+      } else if (cfgModo === "infra" || cfgModo === "infraestructura" || cfgModo === "red") {
+        AppState.modo = "infra";
+      } else if (cfgModo === "equipo" || cfgModo === "individual" || cfgModo === "host") {
+        AppState.modo = "equipo";
+      } else if (netdiscovers.length > 0 || AppState.equipos.length > 1) {
+        AppState.modo = "infra";
+      } else if (filesMap.size > 0) {
+        AppState.modo = "equipo";
       }
 
       const allPortKeys = new Set([...Object.keys(nmaps), ...Object.keys(sss), ...Object.keys(extraServicios)]);
       const listaPuertos = [];
       for (let pKey of allPortKeys) {
+        if (pKey.includes(":")) continue;
         const [pNumStr, proto] = pKey.split("/");
         const pNum = parseInt(pNumStr, 10) || 0;
         const nmapInfo = nmaps[pKey] || {};
@@ -1803,8 +2932,13 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
     // LIMPIAR FORMULARIO
     function clearFormData() {
       AppState.files = new Map();
+      AppState.modo = "equipo";
+      AppState.modoManual = null;
       AppState.general = {};
       AppState.inventario = [];
+      AppState.inventarioInfra = [];
+      AppState.equipos = [];
+      AppState.resumenRed = { rango: "Segmento local", subredes: [], totalEquipos: 0, equiposConPuertos: 0, totalPuertos: 0 };
       AppState.controles = parseControles(GENERIC_CONTROLES);
       AppState.hallazgos = [];
       AppState.herramientas = [];
@@ -1828,6 +2962,33 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
       document.getElementById("btnSelectFolder").addEventListener("click", selectFolderModern);
       document.getElementById("btnBrowseFolder").addEventListener("click", selectFolderModern);
       document.getElementById("btnBrowseFiles").addEventListener("click", () => inputFiles.click());
+
+      // Botón Volver a analizar
+      const btnReload = document.getElementById("btnReloadFolder");
+      if (btnReload) {
+        btnReload.addEventListener("click", () => {
+          if (AppState.files && AppState.files.size > 0) {
+            processParsedData(AppState.files);
+            showAppNotification("Datos de la carpeta reanalizados.", "info");
+          } else {
+            selectFolderModern();
+          }
+        });
+      }
+
+      // Botón alternar Modo Equipo / Modo Infraestructura
+      const btnToggleMode = document.getElementById("btnToggleMode");
+      if (btnToggleMode) {
+        btnToggleMode.addEventListener("click", () => {
+          AppState.modo = AppState.modo === "infra" ? "equipo" : "infra";
+          AppState.modoManual = AppState.modo;
+          renderReport();
+          const msg = AppState.modo === "infra"
+            ? "Modo Infraestructura activado: mostrando Topografía de Red e inventario multi-equipo."
+            : "Modo Equipo Único activado: mostrando vista individual.";
+          showAppNotification(msg, "info");
+        });
+      }
 
       // Botón Poner fecha actual (-f)
       document.getElementById("btnSetTodayDate").addEventListener("click", () => {
@@ -1938,6 +3099,8 @@ Cabeceras de seguridad (HSTS, CSP, X-FrameOptions) | curl -I https:// | Ausente 
       // Botón Exportar TXT actualizados
       document.getElementById("btnExportTxt").addEventListener("click", () => {
         try {
+          const obsRedEl = document.getElementById("rep_observaciones_red");
+          const obsRedVal = obsRedEl ? obsRedEl.innerText.replace(/\r?\n/g, " ") : "";
           const genTxt = `# Datos generales actualizados
 titulo: ${document.getElementById("rep_titulo").innerText}
 codigo: ${document.getElementById("rep_codigo").innerText}
@@ -1958,6 +3121,7 @@ tipo_de_equipo: ${document.getElementById("rep_tipo_de_equipo").innerText}
 funcion: ${document.getElementById("rep_funcion").innerText}
 propietario: ${document.getElementById("rep_propietario").innerText}
 ultimo_arranque: ${document.getElementById("rep_ultimo_arranque").innerText}
+observaciones_red: ${obsRedVal}
 resumen: ${document.getElementById("rep_resumen_texto").innerText}
 firma_auditor: ${document.getElementById("rep_firma_auditor_sig").innerText}
 `;

@@ -34,10 +34,24 @@ ENV/
 env.bak/
 venv.bak/
 
-# NetSpector audit output and temporary test files
+# NetSpector audit output, client evidence folders and generated reports
+*.html
+!NetSpector.html
+*.pdf
+*.txt
+!requirements.txt
+*.log
+*.out
+*.nmap
+*.gnmap
+*.xml
 /mi_auditoria/
 /mi_red/
 /informes/
+/auditoria*/
+/evidencias*/
+/resultados*/
+/cliente*/
 /salida.html
 /test_*/
 *.tmp
